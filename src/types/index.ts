@@ -5,3 +5,4 @@ export * from './dream';
 export * from './ruleSet';
 export * from './encyclopedia';
 export * from './dualDream';
+export * from './dreamMap';

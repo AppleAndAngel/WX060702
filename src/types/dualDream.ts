@@ -1,4 +1,5 @@
-import type { DreamTheater, DreamScene, DreamEncyclopedia } from './dream';
+import type { DreamTheater, DreamScene } from './dream';
+import type { DreamEncyclopedia } from './encyclopedia';
 import type { Entity } from './entity';
 import type { AnimationFrame } from './animation';
 

@@ -8,7 +8,8 @@ import DreamTheaterTimeline from '@/components/DreamTheaterTimeline.vue';
 import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
 import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users } from 'lucide-vue-next';
+import DreamMapView from '@/components/DreamMapView.vue';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -19,6 +20,7 @@ const dreamText = ref('');
 const sceneCount = ref(4);
 const showExportPanel = ref(false);
 const showEncyclopedia = ref(false);
+const showDreamMap = ref(false);
 
 const handleGenerate = async () => {
   if (!dreamText.value.trim()) return;
@@ -45,6 +47,12 @@ const closeExportPanel = () => {
 const handleOpenEncyclopedia = () => {
   if (dreamStore.currentDreamTheater?.encyclopedia) {
     showEncyclopedia.value = true;
+  }
+};
+
+const handleOpenDreamMap = () => {
+  if (dreamStore.currentDreamTheater) {
+    showDreamMap.value = true;
   }
 };
 </script>
@@ -132,6 +140,14 @@ const handleOpenEncyclopedia = () => {
                   图鉴
                 </button>
                 <button
+                  class="flex-1 pixel-btn flex items-center justify-center gap-2"
+                  :disabled="!dreamStore.currentDreamTheater"
+                  @click="handleOpenDreamMap"
+                >
+                  <MapPin class="w-4 h-4" />
+                  地图
+                </button>
+                <button
                   class="flex-1 pixel-btn-primary flex items-center justify-center gap-2"
                   :disabled="!dreamStore.currentDreamTheater"
                   @click="handleExport"
@@ -205,6 +221,11 @@ const handleOpenEncyclopedia = () => {
     <DreamEncyclopedia
       :visible="showEncyclopedia"
       @close="showEncyclopedia = false"
+    />
+
+    <DreamMapView
+      :visible="showDreamMap"
+      @close="showDreamMap = false"
     />
   </div>
 </template>
