@@ -111,6 +111,7 @@ export const useDreamStore = defineStore('dream', () => {
       currentDreamTheater.value.scenes[sceneIndex] = newScene;
       currentDreamTheater.value.updatedAt = Date.now();
       updateTotalDuration();
+      regenerateEncyclopedia();
 
       return true;
     } catch (e) {
@@ -119,6 +120,15 @@ export const useDreamStore = defineStore('dream', () => {
     } finally {
       scene.isGenerating = false;
     }
+  };
+
+  const regenerateEncyclopedia = (): void => {
+    if (!currentDreamTheater.value) return;
+    const currentRuleSet = ruleSetStore.currentRuleSet;
+    if (!currentRuleSet) return;
+
+    const generator = createAnimationGenerator(currentRuleSet);
+    generator.regenerateEncyclopedia(currentDreamTheater.value);
   };
 
   const setCurrentScene = (index: number): void => {
@@ -220,6 +230,7 @@ export const useDreamStore = defineStore('dream', () => {
     currentDreamTheater.value.scenes.push(newScene);
     currentDreamTheater.value.updatedAt = Date.now();
     updateTotalDuration();
+    regenerateEncyclopedia();
 
     return newScene;
   };
@@ -245,6 +256,7 @@ export const useDreamStore = defineStore('dream', () => {
 
     currentDreamTheater.value.updatedAt = Date.now();
     updateTotalDuration();
+    regenerateEncyclopedia();
 
     return true;
   };
@@ -269,6 +281,7 @@ export const useDreamStore = defineStore('dream', () => {
     currentDreamTheater.value.scenes.push(newScene);
     currentDreamTheater.value.updatedAt = Date.now();
     updateTotalDuration();
+    regenerateEncyclopedia();
 
     return newScene;
   };
@@ -297,6 +310,7 @@ export const useDreamStore = defineStore('dream', () => {
     }
 
     currentDreamTheater.value.updatedAt = Date.now();
+    regenerateEncyclopedia();
 
     return true;
   };
@@ -349,6 +363,7 @@ export const useDreamStore = defineStore('dream', () => {
     setFps,
     clearDream,
     loadTheater,
+    regenerateEncyclopedia,
   };
 }, {
   persist: {

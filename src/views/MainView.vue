@@ -7,7 +7,8 @@ import PixelCanvas from '@/components/PixelCanvas.vue';
 import DreamTheaterTimeline from '@/components/DreamTheaterTimeline.vue';
 import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2 } from 'lucide-vue-next';
+import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -17,6 +18,7 @@ const router = useRouter();
 const dreamText = ref('');
 const sceneCount = ref(4);
 const showExportPanel = ref(false);
+const showEncyclopedia = ref(false);
 
 const handleGenerate = async () => {
   if (!dreamText.value.trim()) return;
@@ -38,6 +40,12 @@ const handleExport = () => {
 
 const closeExportPanel = () => {
   showExportPanel.value = false;
+};
+
+const handleOpenEncyclopedia = () => {
+  if (dreamStore.currentDreamTheater?.encyclopedia) {
+    showEncyclopedia.value = true;
+  }
 };
 </script>
 
@@ -109,6 +117,14 @@ const closeExportPanel = () => {
                   保存
                 </button>
                 <button
+                  class="flex-1 pixel-btn flex items-center justify-center gap-2"
+                  :disabled="!dreamStore.currentDreamTheater?.encyclopedia"
+                  @click="handleOpenEncyclopedia"
+                >
+                  <BookMarked class="w-4 h-4" />
+                  图鉴
+                </button>
+                <button
                   class="flex-1 pixel-btn-primary flex items-center justify-center gap-2"
                   :disabled="!dreamStore.currentDreamTheater"
                   @click="handleExport"
@@ -178,5 +194,10 @@ const closeExportPanel = () => {
         />
       </div>
     </div>
+
+    <DreamEncyclopedia
+      :visible="showEncyclopedia"
+      @close="showEncyclopedia = false"
+    />
   </div>
 </template>

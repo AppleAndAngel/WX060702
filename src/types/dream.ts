@@ -1,5 +1,6 @@
 import type { Entity } from './entity';
 import type { AnimationFrame } from './animation';
+import type { DreamEncyclopedia } from './encyclopedia';
 
 export interface DreamScene {
   id: string;
@@ -26,6 +27,7 @@ export interface DreamTheater {
   isPlaying: boolean;
   fps: number;
   ruleSetId: string;
+  encyclopedia?: DreamEncyclopedia;
 }
 
 export interface SceneSplitResult {

@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useHistoryStore } from '@/stores/history';
 import { useDreamStore } from '@/stores/dream';
 import { useRouter } from 'vue-router';
-import { Search, Trash2, Download, Upload, X, Clock, Film } from 'lucide-vue-next';
+import { Search, Trash2, Download, Upload, X, Clock, Film, BookMarked } from 'lucide-vue-next';
 import type { HistoryItem } from '@/stores/history';
 
 const historyStore = useHistoryStore();
@@ -174,11 +174,26 @@ const clearAllHistory = () => {
                 <Clock class="w-3 h-3" />
                 {{ formatDuration(item.theater.totalDuration) }}
               </span>
+              <span
+                v-if="item.theater.encyclopedia"
+                class="flex items-center gap-1 text-dream-secondary"
+              >
+                <BookMarked class="w-3 h-3" />
+                {{ item.theater.encyclopedia.elements.length }} 元素
+              </span>
               <span>{{ formatDate(item.savedAt) }}</span>
             </div>
           </div>
 
           <div class="flex flex-col gap-1">
+            <button
+              v-if="item.theater.encyclopedia"
+              class="pixel-btn p-1.5 text-dream-secondary hover:bg-dream-secondary/20"
+              title="查看图鉴"
+              @click.stop="loadHistoryItem(item); router.push('/')"
+            >
+              <BookMarked class="w-3.5 h-3.5" />
+            </button>
             <button
               class="pixel-btn p-1.5"
               title="导出"

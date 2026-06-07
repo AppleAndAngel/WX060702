@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Animation, AnimationFrame, PixelData } from '@/types';
+import type { Animation, AnimationFrame, PixelData, Entity } from '@/types';
 import { useRuleSetStore } from './ruleSet';
 import { useDreamStore } from './dream';
 import { createAnimationGenerator } from '@/engine/animationGenerator';
@@ -13,6 +13,8 @@ export const useAnimationStore = defineStore('animation', () => {
   const animation = ref<Animation | null>(null);
   const isGenerating = ref(false);
   const error = ref<string | null>(null);
+  const highlightedEntities = ref<Entity[]>([]);
+  const highlightSceneId = ref<string | null>(null);
 
   const frameCount = computed(() => {
     return animation.value?.frames.length || 0;
@@ -200,6 +202,25 @@ export const useAnimationStore = defineStore('animation', () => {
     dreamStore.setFps(newFps);
   };
 
+  const setHighlightedEntities = (entities: Entity[], sceneId?: string): void => {
+    highlightedEntities.value = entities;
+    highlightSceneId.value = sceneId || null;
+
+    if (sceneId && dreamStore.currentDreamTheater) {
+      const sceneIndex = dreamStore.currentDreamTheater.scenes.findIndex(s => s.id === sceneId);
+      if (sceneIndex !== -1) {
+        dreamStore.setCurrentScene(sceneIndex);
+      }
+    }
+  };
+
+  const clearHighlightedEntities = (): void => {
+    highlightedEntities.value = [];
+    highlightSceneId.value = null;
+  };
+
+  const hasHighlight = computed(() => highlightedEntities.value.length > 0);
+
   return {
     animation,
     isGenerating,
@@ -222,5 +243,10 @@ export const useAnimationStore = defineStore('animation', () => {
     duplicateFrame,
     clearAnimation,
     setFps,
+    highlightedEntities,
+    highlightSceneId,
+    hasHighlight,
+    setHighlightedEntities,
+    clearHighlightedEntities,
   };
 });

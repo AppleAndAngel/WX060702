@@ -2,6 +2,7 @@ import type { Entity, AnimationFrame, Animation, DreamScene, DreamTheater, Pixel
 import { generateId, createEmptyPixelData, randomChoice, randomInt } from '@/utils/pixelUtils';
 import { createRuleEngine } from './ruleEngine';
 import { createLayoutSystem } from './layoutSystem';
+import { createEncyclopediaGenerator } from './encyclopediaGenerator';
 import type { RuleSet } from '@/types';
 
 export class AnimationGenerator {
@@ -176,6 +177,13 @@ export class AnimationGenerator {
     };
   }
 
+  regenerateEncyclopedia(theater: DreamTheater): DreamTheater {
+    const encyclopediaGenerator = createEncyclopediaGenerator();
+    theater.encyclopedia = encyclopediaGenerator.generateEncyclopedia(theater);
+    theater.updatedAt = Date.now();
+    return theater;
+  }
+
   splitDreamIntoScenes(
     dreamText: string,
     minActs: number = 3,
@@ -249,7 +257,7 @@ export class AnimationGenerator {
   ): DreamTheater {
     const totalDuration = scenes.reduce((sum, scene) => sum + scene.duration, 0);
 
-    return {
+    const theater: DreamTheater = {
       id: generateId(),
       originalDream: dreamText,
       title: this.generateTheaterTitle(dreamText),
@@ -262,6 +270,11 @@ export class AnimationGenerator {
       fps,
       ruleSetId: this.ruleSet.id,
     };
+
+    const encyclopediaGenerator = createEncyclopediaGenerator();
+    theater.encyclopedia = encyclopediaGenerator.generateEncyclopedia(theater);
+
+    return theater;
   }
 
   private generateTheaterTitle(dreamText: string): string {

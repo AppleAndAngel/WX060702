@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useDreamStore } from '@/stores/dream';
-import type { PixelData } from '@/types';
+import { useAnimationStore } from '@/stores/animation';
+import type { PixelData, Entity } from '@/types';
 
 const dreamStore = useDreamStore();
+const animationStore = useAnimationStore();
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -57,6 +59,43 @@ const drawPixelData = () => {
     ctx.lineTo(x * pixelSize.value, height * pixelSize.value);
     ctx.stroke();
   }
+
+  drawHighlights(ctx);
+};
+
+const drawHighlights = (ctx: CanvasRenderingContext2D) => {
+  if (!animationStore.hasHighlight || !dreamStore.currentScene) return;
+
+  const currentSceneId = dreamStore.currentScene.id;
+  const highlightSceneId = animationStore.highlightSceneId;
+
+  if (highlightSceneId && highlightSceneId !== currentSceneId) return;
+
+  const entities = animationStore.highlightedEntities;
+
+  for (const entity of entities) {
+    const x = entity.x * pixelSize.value;
+    const y = entity.y * pixelSize.value;
+    const w = entity.width * pixelSize.value;
+    const h = entity.height * pixelSize.value;
+
+    ctx.save();
+
+    ctx.strokeStyle = '#e94560';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 4]);
+    ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+
+    ctx.fillStyle = 'rgba(233, 69, 96, 0.15)';
+    ctx.fillRect(x, y, w, h);
+
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(233, 69, 96, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.restore();
+  }
 };
 
 const handleWheel = (e: WheelEvent) => {
@@ -92,6 +131,14 @@ watch(pixelSize, () => {
   drawPixelData();
 });
 
+watch(
+  () => [animationStore.highlightedEntities, animationStore.highlightSceneId],
+  () => {
+    drawPixelData();
+  },
+  { deep: true }
+);
+
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
@@ -126,8 +173,17 @@ onUnmounted(() => {
       @wheel.passive="handleWheel"
     />
 
-    <div v-if="!isEmpty" class="absolute bottom-2 right-2 text-xs text-dream-accent bg-dream-dark/80 px-2 py-1 pixel-border">
-      缩放: {{ pixelSize }}x (Ctrl+滚轮)
+    <div v-if="!isEmpty" class="absolute bottom-2 right-2 flex items-center gap-2">
+      <button
+        v-if="animationStore.hasHighlight"
+        class="text-xs text-white bg-dream-primary px-2 py-1 pixel-border hover:bg-dream-primary/80 transition-colors"
+        @click="animationStore.clearHighlightedEntities()"
+      >
+        ✕ 清除高亮
+      </button>
+      <div class="text-xs text-dream-accent bg-dream-dark/80 px-2 py-1 pixel-border">
+        缩放: {{ pixelSize }}x (Ctrl+滚轮)
+      </div>
     </div>
 
     <div
