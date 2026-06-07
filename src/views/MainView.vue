@@ -8,7 +8,7 @@ import DreamTheaterTimeline from '@/components/DreamTheaterTimeline.vue';
 import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
 import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked } from 'lucide-vue-next';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -64,6 +64,13 @@ const handleOpenEncyclopedia = () => {
         </div>
 
         <nav class="flex items-center gap-4">
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/dual')"
+          >
+            <Users class="w-4 h-4" />
+            <span>双人合梦</span>
+          </button>
           <button
             class="pixel-btn flex items-center gap-2"
             @click="router.push('/history')"

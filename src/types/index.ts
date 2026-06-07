@@ -4,3 +4,4 @@ export * from './animation';
 export * from './dream';
 export * from './ruleSet';
 export * from './encyclopedia';
+export * from './dualDream';

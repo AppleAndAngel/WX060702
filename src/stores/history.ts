@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { DreamTheater } from '@/types';
+import type { DreamTheater, DualDreamTheater } from '@/types';
 import { useDreamStore } from './dream';
 import { generateId } from '@/utils/pixelUtils';
 
@@ -9,6 +9,12 @@ export interface HistoryItem {
   theater: DreamTheater;
   savedAt: number;
   thumbnail: string;
+  isDualDream?: boolean;
+}
+
+export interface DualDreamHistoryItem extends HistoryItem {
+  theater: DualDreamTheater;
+  isDualDream: true;
 }
 
 export const useHistoryStore = defineStore('history', () => {
@@ -186,17 +192,101 @@ export const useHistoryStore = defineStore('history', () => {
     );
   };
 
+  const saveDualDreamToHistory = async (dualTheater: DualDreamTheater): Promise<boolean> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const theaterToSave = JSON.parse(JSON.stringify(dualTheater));
+      theaterToSave.isPlaying = false;
+
+      const thumbnail = generateThumbnail(theaterToSave);
+
+      const existingIndex = history.value.findIndex(
+        h => h.theater.id === theaterToSave.id
+      );
+
+      const historyItem: DualDreamHistoryItem = {
+        id: generateId(),
+        theater: theaterToSave,
+        savedAt: Date.now(),
+        thumbnail,
+        isDualDream: true,
+      };
+
+      if (existingIndex !== -1) {
+        history.value[existingIndex] = historyItem;
+      } else {
+        history.value.unshift(historyItem);
+      }
+
+      return true;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '保存失败';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loadDualDreamFromHistory = (historyId: string): DualDreamTheater | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isDualDream) {
+      error.value = '未找到该双人合梦记录';
+      return null;
+    }
+
+    try {
+      const theater = JSON.parse(JSON.stringify(item.theater)) as DualDreamTheater;
+      theater.isPlaying = false;
+      theater.currentSceneIndex = 0;
+      return theater;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '加载失败';
+      return null;
+    }
+  };
+
+  const exportDualDreamItem = (historyId: string): string | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isDualDream) return null;
+
+    const exportData = {
+      version: '1.0',
+      type: 'dual-dream',
+      exportedAt: Date.now(),
+      dualTheater: item.theater,
+    };
+
+    return JSON.stringify(exportData, null, 2);
+  };
+
+  const dualDreamHistory = computed(() => {
+    return sortedHistory.value.filter(h => h.isDualDream) as DualDreamHistoryItem[];
+  });
+
+  const singleDreamHistory = computed(() => {
+    return sortedHistory.value.filter(h => !h.isDualDream);
+  });
+
   return {
     history,
     isLoading,
     error,
     historyCount,
     sortedHistory,
+    dualDreamHistory,
+    singleDreamHistory,
     saveToHistory,
+    saveDualDreamToHistory,
     loadFromHistory,
+    loadDualDreamFromHistory,
     removeFromHistory,
     clearHistory,
     exportHistoryItem,
+    exportDualDreamItem,
     importHistoryItem,
     getHistoryItem,
     searchHistory,

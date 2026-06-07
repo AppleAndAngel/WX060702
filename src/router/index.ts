@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import MainView from '@/views/MainView.vue';
 import HistoryView from '@/views/HistoryView.vue';
 import RuleSetsView from '@/views/RuleSetsView.vue';
+import DualDreamView from '@/views/DualDreamView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -10,6 +11,11 @@ const router = createRouter({
       path: '/',
       name: 'main',
       component: MainView,
+    },
+    {
+      path: '/dual',
+      name: 'dual',
+      component: DualDreamView,
     },
     {
       path: '/history',
