@@ -3,6 +3,7 @@ import MainView from '@/views/MainView.vue';
 import HistoryView from '@/views/HistoryView.vue';
 import RuleSetsView from '@/views/RuleSetsView.vue';
 import DualDreamView from '@/views/DualDreamView.vue';
+import BranchingEndingsView from '@/views/BranchingEndingsView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,11 @@ const router = createRouter({
       path: '/dual',
       name: 'dual',
       component: DualDreamView,
+    },
+    {
+      path: '/branching',
+      name: 'branching',
+      component: BranchingEndingsView,
     },
     {
       path: '/history',

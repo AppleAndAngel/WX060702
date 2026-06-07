@@ -9,7 +9,7 @@ import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
 import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
 import DreamMapView from '@/components/DreamMapView.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin } from 'lucide-vue-next';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -72,6 +72,13 @@ const handleOpenDreamMap = () => {
         </div>
 
         <nav class="flex items-center gap-4">
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/branching')"
+          >
+            <GitBranch class="w-4 h-4" />
+            <span>结局分支</span>
+          </button>
           <button
             class="pixel-btn flex items-center gap-2"
             @click="router.push('/dual')"
@@ -159,6 +166,16 @@ const handleOpenDreamMap = () => {
                   <template v-else>导出</template>
                 </button>
               </div>
+
+              <button
+                class="w-full pixel-btn flex items-center justify-center gap-2 mt-2"
+                :disabled="!dreamStore.currentDreamTheater"
+                :class="dreamStore.currentDreamTheater ? 'bg-gradient-to-r from-yellow-500/20 via-purple-500/20 to-red-500/20' : ''"
+                @click="router.push('/branching')"
+              >
+                <GitBranch class="w-4 h-4" />
+                生成三种不同结局
+              </button>
             </div>
 
             <SpriteEditor v-if="dreamStore.selectedSprite" />

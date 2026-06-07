@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { DreamTheater, DualDreamTheater } from '@/types';
+import type { DreamTheater, DualDreamTheater, BranchingEndingsTheater } from '@/types';
 import { useDreamStore } from './dream';
 import { generateId } from '@/utils/pixelUtils';
 
@@ -10,11 +10,18 @@ export interface HistoryItem {
   savedAt: number;
   thumbnail: string;
   isDualDream?: boolean;
+  isBranchingEndings?: boolean;
 }
 
 export interface DualDreamHistoryItem extends HistoryItem {
   theater: DualDreamTheater;
   isDualDream: true;
+}
+
+export interface BranchingEndingsHistoryItem extends HistoryItem {
+  theater: BranchingEndingsTheater;
+  isBranchingEndings: true;
+  selectedEndingThumbnail?: string;
 }
 
 export const useHistoryStore = defineStore('history', () => {
@@ -268,8 +275,103 @@ export const useHistoryStore = defineStore('history', () => {
   });
 
   const singleDreamHistory = computed(() => {
-    return sortedHistory.value.filter(h => !h.isDualDream);
+    return sortedHistory.value.filter(h => !h.isDualDream && !h.isBranchingEndings);
   });
+
+  const branchingEndingsHistory = computed(() => {
+    return sortedHistory.value.filter(h => h.isBranchingEndings) as BranchingEndingsHistoryItem[];
+  });
+
+  const generateBranchingEndingsThumbnail = (theater: BranchingEndingsTheater): string => {
+    return generateThumbnail(theater.baseTheater);
+  };
+
+  const saveBranchingEndingsToHistory = async (branchingTheater: BranchingEndingsTheater): Promise<boolean> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const theaterToSave = JSON.parse(JSON.stringify(branchingTheater));
+      theaterToSave.baseTheater.isPlaying = false;
+      theaterToSave.endings.forEach((ending: any) => {
+        ending.theater.isPlaying = false;
+      });
+
+      const thumbnail = generateBranchingEndingsThumbnail(theaterToSave);
+      
+      let selectedEndingThumbnail: string | undefined;
+      if (theaterToSave.selectedEndingId) {
+        const selectedEnding = theaterToSave.endings.find((e: any) => e.id === theaterToSave.selectedEndingId);
+        if (selectedEnding) {
+          selectedEndingThumbnail = generateThumbnail(selectedEnding.theater);
+        }
+      }
+
+      const existingIndex = history.value.findIndex(
+        h => h.theater.id === theaterToSave.id
+      );
+
+      const historyItem: BranchingEndingsHistoryItem = {
+        id: generateId(),
+        theater: theaterToSave,
+        savedAt: Date.now(),
+        thumbnail,
+        isBranchingEndings: true,
+        selectedEndingThumbnail,
+      };
+
+      if (existingIndex !== -1) {
+        history.value[existingIndex] = historyItem;
+      } else {
+        history.value.unshift(historyItem);
+      }
+
+      return true;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '保存失败';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loadBranchingEndingsFromHistory = (historyId: string): BranchingEndingsTheater | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isBranchingEndings) {
+      error.value = '未找到该多结局记录';
+      return null;
+    }
+
+    try {
+      const theater = JSON.parse(JSON.stringify(item.theater)) as BranchingEndingsTheater;
+      theater.baseTheater.isPlaying = false;
+      theater.baseTheater.currentSceneIndex = 0;
+      theater.endings.forEach(ending => {
+        ending.theater.isPlaying = false;
+        ending.theater.currentSceneIndex = 0;
+      });
+      return theater;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '加载失败';
+      return null;
+    }
+  };
+
+  const exportBranchingEndingsItem = (historyId: string): string | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isBranchingEndings) return null;
+
+    const exportData = {
+      version: '1.0',
+      type: 'branching-endings',
+      exportedAt: Date.now(),
+      branchingTheater: item.theater,
+    };
+
+    return JSON.stringify(exportData, null, 2);
+  };
 
   return {
     history,
@@ -279,14 +381,18 @@ export const useHistoryStore = defineStore('history', () => {
     sortedHistory,
     dualDreamHistory,
     singleDreamHistory,
+    branchingEndingsHistory,
     saveToHistory,
     saveDualDreamToHistory,
+    saveBranchingEndingsToHistory,
     loadFromHistory,
     loadDualDreamFromHistory,
+    loadBranchingEndingsFromHistory,
     removeFromHistory,
     clearHistory,
     exportHistoryItem,
     exportDualDreamItem,
+    exportBranchingEndingsItem,
     importHistoryItem,
     getHistoryItem,
     searchHistory,

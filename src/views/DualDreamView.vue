@@ -11,6 +11,7 @@ import {
   Download,
   GitCompare,
   Users,
+  GitBranch,
 } from 'lucide-vue-next';
 import { useDualDreamStore } from '@/stores/dualDream';
 import { useRuleSetStore } from '@/stores/ruleSet';
@@ -157,6 +158,13 @@ onUnmounted(() => {
           >
             <Wand2 class="w-4 h-4" />
             <span>单人模式</span>
+          </button>
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/branching')"
+          >
+            <GitBranch class="w-4 h-4" />
+            <span>结局分支</span>
           </button>
           <button
             class="pixel-btn flex items-center gap-2"

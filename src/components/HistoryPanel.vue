@@ -2,12 +2,15 @@
 import { ref, computed } from 'vue';
 import { useHistoryStore } from '@/stores/history';
 import { useDreamStore } from '@/stores/dream';
+import { useBranchingEndingsStore } from '@/stores/branchingEndings';
 import { useRouter } from 'vue-router';
-import { Search, Trash2, Download, Upload, X, Clock, Film, BookMarked } from 'lucide-vue-next';
-import type { HistoryItem } from '@/stores/history';
+import { Search, Trash2, Download, Upload, X, Clock, Film, BookMarked, Users, GitBranch, Wand2 } from 'lucide-vue-next';
+import type { HistoryItem, BranchingEndingsHistoryItem, DualDreamHistoryItem } from '@/stores/history';
+import type { BranchingEndingsTheater } from '@/types';
 
 const historyStore = useHistoryStore();
 const dreamStore = useDreamStore();
+const branchingStore = useBranchingEndingsStore();
 const router = useRouter();
 
 const searchQuery = ref('');
@@ -35,14 +38,76 @@ const formatDuration = (ms: number) => {
   return (ms / 1000).toFixed(1) + 's';
 };
 
+const getTheaterForDisplay = (item: HistoryItem) => {
+  if (item.isBranchingEndings) {
+    const branchingItem = item as BranchingEndingsHistoryItem;
+    return branchingItem.theater.baseTheater;
+  }
+  return item.theater;
+};
+
+const getEndingCount = (item: HistoryItem) => {
+  if (item.isBranchingEndings) {
+    const branchingItem = item as BranchingEndingsHistoryItem;
+    return branchingItem.theater.endings?.length || 0;
+  }
+  return 0;
+};
+
 const loadHistoryItem = (item: HistoryItem) => {
-  historyStore.loadFromHistory(item.id);
-  router.push('/');
+  if (item.isBranchingEndings) {
+    const branchingItem = item as BranchingEndingsHistoryItem;
+    const theater = historyStore.loadBranchingEndingsFromHistory(item.id);
+    if (theater) {
+      branchingStore.loadBranchingTheater(theater);
+      router.push('/branching');
+    }
+  } else if (item.isDualDream) {
+    historyStore.loadDualDreamFromHistory(item.id);
+    router.push('/dual');
+  } else {
+    historyStore.loadFromHistory(item.id);
+    router.push('/');
+  }
+};
+
+const loadSelectedEnding = (item: HistoryItem, event: Event) => {
+  event.stopPropagation();
+  if (!item.isBranchingEndings) return;
+  
+  const branchingItem = item as BranchingEndingsHistoryItem;
+  const theater = historyStore.loadBranchingEndingsFromHistory(item.id);
+  if (!theater) return;
+  
+  const selectedEnding = theater.endings.find(e => e.id === theater.selectedEndingId);
+  if (selectedEnding) {
+    const theaterToLoad = JSON.parse(JSON.stringify(selectedEnding.theater));
+    theaterToLoad.isPlaying = false;
+    theaterToLoad.currentSceneIndex = 0;
+    dreamStore.loadTheater(theaterToLoad);
+    router.push('/');
+  } else {
+    alert('请先选择一个结局');
+  }
+};
+
+const exportBranchingEndingsItem = (item: HistoryItem, event: Event) => {
+  event.stopPropagation();
+  const data = historyStore.exportBranchingEndingsItem(item.id);
+  if (data) {
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${getTheaterForDisplay(item).title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_多结局.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 };
 
 const deleteHistoryItem = (item: HistoryItem, event: Event) => {
   event.stopPropagation();
-  if (confirm(`确定要删除「${item.theater.title}」吗？`)) {
+  if (confirm(`确定要删除「${getTheaterForDisplay(item).title}」吗？`)) {
     historyStore.removeFromHistory(item.id);
   }
 };
@@ -145,41 +210,76 @@ const clearAllHistory = () => {
         @click="loadHistoryItem(item)"
       >
         <div class="flex gap-3">
-          <div class="flex-shrink-0 w-20 h-20 pixel-border bg-dream-dark overflow-hidden">
+          <div class="flex-shrink-0 w-20 h-20 pixel-border bg-dream-dark overflow-hidden relative">
             <img
-              v-if="item.thumbnail"
+              v-if="item.isBranchingEndings && (item as BranchingEndingsHistoryItem).selectedEndingThumbnail"
+              :src="(item as BranchingEndingsHistoryItem).selectedEndingThumbnail"
+              :alt="getTheaterForDisplay(item).title"
+              class="w-full h-full object-cover"
+              :style="{ imageRendering: 'pixelated' }"
+            />
+            <img
+              v-else-if="item.thumbnail"
               :src="item.thumbnail"
-              :alt="item.theater.title"
+              :alt="getTheaterForDisplay(item).title"
               class="w-full h-full object-cover"
               :style="{ imageRendering: 'pixelated' }"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-2xl">
               🎬
             </div>
+            <div
+              v-if="item.isBranchingEndings"
+              class="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-500/80 via-purple-500/80 to-red-500/80 text-[8px] text-center py-0.5 font-pixel"
+            >
+              多结局
+            </div>
           </div>
 
           <div class="flex-1 min-w-0">
-            <h4 class="font-pixel text-sm text-dream-secondary truncate mb-1">
-              {{ item.theater.title }}
-            </h4>
+            <div class="flex items-center gap-2 mb-1">
+              <h4 class="font-pixel text-sm text-dream-secondary truncate">
+                {{ getTheaterForDisplay(item).title }}
+              </h4>
+              <span
+                v-if="item.isBranchingEndings"
+                class="flex items-center gap-1 text-[10px] px-1.5 py-0.5 pixel-border bg-gradient-to-r from-yellow-500/20 via-purple-500/20 to-red-500/20 text-dream-accent"
+              >
+                <GitBranch class="w-3 h-3" />
+                {{ getEndingCount(item) }} 结局
+              </span>
+              <span
+                v-else-if="item.isDualDream"
+                class="flex items-center gap-1 text-[10px] px-1.5 py-0.5 pixel-border bg-pink-500/20 text-pink-300"
+              >
+                <Users class="w-3 h-3" />
+                双人合梦
+              </span>
+              <span
+                v-else
+                class="text-[10px] px-1.5 py-0.5 pixel-border bg-dream-primary/20 text-dream-primary"
+              >
+                单人
+              </span>
+            </div>
             <p class="text-xs text-dream-accent line-clamp-1 mb-2">
-              {{ item.theater.originalDream }}
+              {{ getTheaterForDisplay(item).originalDream }}
             </p>
             <div class="flex items-center gap-3 text-xs text-dream-accent">
               <span class="flex items-center gap-1">
                 <Film class="w-3 h-3" />
-                {{ item.theater.scenes.length }} 幕
+                {{ getTheaterForDisplay(item).scenes.length }} 幕
               </span>
               <span class="flex items-center gap-1">
                 <Clock class="w-3 h-3" />
-                {{ formatDuration(item.theater.totalDuration) }}
+                {{ formatDuration(getTheaterForDisplay(item).totalDuration) }}
               </span>
               <span
-                v-if="item.theater.encyclopedia"
+                v-if="getTheaterForDisplay(item).encyclopedia"
                 class="flex items-center gap-1 text-dream-secondary"
               >
                 <BookMarked class="w-3 h-3" />
-                {{ item.theater.encyclopedia.elements.length }} 元素
+                {{ getTheaterForDisplay(item).encyclopedia.elements.length }} 元素
               </span>
               <span>{{ formatDate(item.savedAt) }}</span>
             </div>
@@ -187,17 +287,25 @@ const clearAllHistory = () => {
 
           <div class="flex flex-col gap-1">
             <button
-              v-if="item.theater.encyclopedia"
+              v-if="item.isBranchingEndings && (item as BranchingEndingsHistoryItem).theater.selectedEndingId"
+              class="pixel-btn p-1.5 text-dream-primary hover:bg-dream-primary/20"
+              title="加载已选结局到编辑区"
+              @click="(e) => loadSelectedEnding(item, e)"
+            >
+              <Wand2 class="w-3.5 h-3.5" />
+            </button>
+            <button
+              v-if="getTheaterForDisplay(item).encyclopedia"
               class="pixel-btn p-1.5 text-dream-secondary hover:bg-dream-secondary/20"
               title="查看图鉴"
-              @click.stop="loadHistoryItem(item); router.push('/')"
+              @click.stop="loadHistoryItem(item)"
             >
               <BookMarked class="w-3.5 h-3.5" />
             </button>
             <button
               class="pixel-btn p-1.5"
               title="导出"
-              @click="(e) => exportHistoryItem(item, e)"
+              @click="(e) => item.isBranchingEndings ? exportBranchingEndingsItem(item, e) : exportHistoryItem(item, e)"
             >
               <Download class="w-3.5 h-3.5" />
             </button>
@@ -213,18 +321,38 @@ const clearAllHistory = () => {
 
         <div class="mt-2 pt-2 border-t border-dream-border flex flex-wrap gap-1">
           <span
-            v-for="scene in item.theater.scenes.slice(0, 5)"
+            v-for="scene in getTheaterForDisplay(item).scenes.slice(0, 5)"
             :key="scene.id"
             class="text-[10px] px-1.5 py-0.5 bg-dream-dark text-dream-accent pixel-border"
           >
             {{ scene.actNumber }}. {{ scene.title }}
           </span>
           <span
-            v-if="item.theater.scenes.length > 5"
+            v-if="getTheaterForDisplay(item).scenes.length > 5"
             class="text-[10px] px-1.5 py-0.5 text-dream-accent"
           >
-            +{{ item.theater.scenes.length - 5 }} 更多
+            +{{ getTheaterForDisplay(item).scenes.length - 5 }} 更多
           </span>
+          <div
+            v-if="item.isBranchingEndings"
+            class="w-full mt-2 pt-2 border-t border-dream-border/50 flex items-center gap-2 flex-wrap"
+          >
+            <span class="text-[10px] text-dream-accent">结局:</span>
+            <span
+              v-for="ending in (item as BranchingEndingsHistoryItem).theater.endings"
+              :key="ending.id"
+              class="text-[10px] px-1.5 py-0.5 pixel-border"
+              :style="{
+                backgroundColor: ending.theme.color + '20',
+                color: ending.theme.color,
+                borderColor: ending.isSelected ? ending.theme.color : undefined,
+              }"
+              :class="ending.isSelected ? 'ring-1' : ''"
+            >
+              {{ ending.variant === 'ending-a' ? 'A' : ending.variant === 'ending-b' ? 'B' : 'C' }}. {{ ending.theme.name }}
+              <span v-if="ending.isSelected" class="ml-1">✓</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
