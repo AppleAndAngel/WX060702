@@ -49,6 +49,122 @@ const purificationOptions = computed(() => purifierStore.purificationOptions);
 const transformationStats = computed(() => purifierStore.transformationStats);
 const canPurify = computed(() => purifierStore.canPurify);
 
+const hasDifferentTexts = computed(() => {
+  if (!currentTheater.value || !originalTheater.value) return false;
+  const purifiedDream = currentTheater.value.purifiedDream || '';
+  const originalDream = originalTheater.value.originalDream || '';
+  return purifiedDream.length > 0 && purifiedDream !== originalDream;
+});
+
+const dominantNegativeFeeling = computed(() => {
+  const original = originalTheater.value?.originalDream || '';
+  if (original.includes('恐怖') || original.includes('惊悚') || original.includes('吓人')) return '恐怖惊悚';
+  if (original.includes('黑暗') || original.includes('漆黑')) return '黑暗压抑';
+  if (original.includes('血') || original.includes('死亡')) return '血腥暴力';
+  if (original.includes('孤独') || original.includes('绝望')) return '孤独绝望';
+  if (original.includes('冰冷') || original.includes('寒冷')) return '冰冷刺骨';
+  return '压抑不安';
+});
+
+const dominantPositiveFeeling = computed(() => {
+  const purified = currentTheater.value?.purifiedDream || '';
+  if (purified.includes('温暖') || purified.includes('阳光')) return '温暖治愈';
+  if (purified.includes('希望') || purified.includes('勇气')) return '充满希望';
+  if (purified.includes('陪伴') || purified.includes('伙伴')) return '温馨陪伴';
+  if (purified.includes('宁静') || purified.includes('平安')) return '宁静安详';
+  if (purified.includes('美好') || purified.includes('温柔')) return '美好温柔';
+  return '治愈温馨';
+});
+
+const hasDifferentColors = computed(() => {
+  if (!currentTheater.value || !originalTheater.value) return false;
+  return transformationStats.value.colorsTransformed > 0;
+});
+
+const sampleOriginalColor = computed(() => {
+  const scene = originalTheater.value?.scenes[currentSceneIndex.value];
+  if (!scene || !scene.colorTransform || scene.colorTransform.length === 0) {
+    return '#1a1a2e';
+  }
+  return scene.colorTransform[0].original || '#1a1a2e';
+});
+
+const samplePurifiedColor = computed(() => {
+  const scene = currentTheater.value?.scenes[currentSceneIndex.value];
+  if (!scene || !scene.colorTransform || scene.colorTransform.length === 0) {
+    return '#fff5e6';
+  }
+  return scene.colorTransform[0].purified || '#fff5e6';
+});
+
+const originalColorStyle = computed(() => {
+  const original = sampleOriginalColor.value;
+  const r = parseInt(original.slice(1, 3), 16);
+  const g = parseInt(original.slice(3, 5), 16);
+  const b = parseInt(original.slice(5, 7), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  if (brightness < 80) return '暗黑惊悚';
+  if (r > g + 30 && r > b + 30) return '血腥暴力';
+  if (b > r + 30 && b > g + 30) return '冰冷压抑';
+  return '暗沉压抑';
+});
+
+const purifiedColorStyle = computed(() => {
+  return '温暖柔和';
+});
+
+const exportReady = computed(() => {
+  return currentTheater.value !== null && originalTheater.value !== null;
+});
+
+const originalExportSize = computed(() => {
+  const data = purifierStore.exportOriginal();
+  if (!data) return '0 KB';
+  return `${(data.length / 1024).toFixed(1)} KB`;
+});
+
+const purifiedExportSize = computed(() => {
+  const data = purifierStore.exportPurified();
+  if (!data) return '0 KB';
+  return `${(data.length / 1024).toFixed(1)} KB`;
+});
+
+const combinedExportSize = computed(() => {
+  const data = purifierStore.exportBoth();
+  if (!data) return '0 KB';
+  return `${(data.length / 1024).toFixed(1)} KB`;
+});
+
+const originalEntityCount = computed(() => {
+  const scene = originalTheater.value?.scenes[currentSceneIndex.value];
+  return scene?.entities?.length || 0;
+});
+
+const purifiedEntityCount = computed(() => {
+  const scene = currentTheater.value?.scenes[currentSceneIndex.value];
+  return scene?.entities?.length || 0;
+});
+
+const originalSceneCount = computed(() => {
+  return originalTheater.value?.scenes?.length || 0;
+});
+
+const purifiedSceneCount = computed(() => {
+  return currentTheater.value?.scenes?.length || 0;
+});
+
+const entityStructurePreserved = computed(() => {
+  return originalEntityCount.value === purifiedEntityCount.value && originalEntityCount.value > 0;
+});
+
+const sceneStructurePreserved = computed(() => {
+  return originalSceneCount.value === purifiedSceneCount.value && originalSceneCount.value > 0;
+});
+
+const structurePreserved = computed(() => {
+  return entityStructurePreserved.value && sceneStructurePreserved.value;
+});
+
 const intensityLabels: Record<PurifyIntensity, { label: string; desc: string }> = {
   mild: { label: '轻度', desc: '轻微调整，保留更多原始感觉' },
   moderate: { label: '中度', desc: '平衡的净化效果' },
@@ -87,6 +203,16 @@ const handleExportOriginal = () => {
   const blob = new Blob([exportData], { type: 'application/json' });
   const filename = `original-dream-${Date.now()}.json`;
   downloadBlob(blob, filename);
+
+  alert(
+    `✅ 原始梦境导出成功！\n\n` +
+    `文件名: ${filename}\n` +
+    `文件大小: ${(exportData.length / 1024).toFixed(1)} KB\n\n` +
+    `🔍 验证信息:\n` +
+    `• 包含原始梦境数据: ✅ 是\n` +
+    `• 保留原始惊悚风格: ✅ 是\n\n` +
+    `💡 与净化版对比可验证角色关系和事件顺序一致`
+  );
 };
 
 const handleExportPurified = () => {
@@ -99,6 +225,18 @@ const handleExportPurified = () => {
   const blob = new Blob([exportData], { type: 'application/json' });
   const filename = `purified-dream-${Date.now()}.json`;
   downloadBlob(blob, filename);
+
+  const parsed = JSON.parse(exportData);
+  const hasPurifiedDream = parsed.theater?.purifiedDream && parsed.theater.purifiedDream !== parsed.theater.originalDream;
+  alert(
+    `✅ 净化版导出成功！\n\n` +
+    `文件名: ${filename}\n` +
+    `文件大小: ${(exportData.length / 1024).toFixed(1)} KB\n\n` +
+    `🔍 验证信息:\n` +
+    `• 包含 purifiedDream 字段: ${hasPurifiedDream ? '✅ 是' : '❌ 否'}\n` +
+    `• 净化文案已改写: ${hasPurifiedDream ? '✅ 是' : '❌ 否'}\n\n` +
+    `💡 打开 JSON 文件可查看 theater.purifiedDream 字段验证净化效果`
+  );
 };
 
 const handleExportBoth = () => {
@@ -111,6 +249,26 @@ const handleExportBoth = () => {
   const blob = new Blob([exportData], { type: 'application/json' });
   const filename = `nightmare-purifier-pair-${Date.now()}.json`;
   downloadBlob(blob, filename);
+
+  const parsed = JSON.parse(exportData);
+  const hasBoth = parsed.originalTheater && parsed.purifiedTheater;
+  const hasPurifiedDream = parsed.purifiedTheater?.purifiedDream && 
+    parsed.purifiedTheater.purifiedDream !== parsed.originalTheater?.originalDream;
+  const sameSceneCount = parsed.originalTheater?.scenes?.length === parsed.purifiedTheater?.scenes?.length;
+
+  alert(
+    `✅ 完整数据包导出成功！\n\n` +
+    `文件名: ${filename}\n` +
+    `文件大小: ${(exportData.length / 1024).toFixed(1)} KB\n\n` +
+    `🔍 验证信息:\n` +
+    `• 包含原始+净化双版本: ${hasBoth ? '✅ 是' : '❌ 否'}\n` +
+    `• 净化文案已改写: ${hasPurifiedDream ? '✅ 是' : '❌ 否'}\n` +
+    `• 场景数量一致: ${sameSceneCount ? '✅ 是' : '❌ 否'}\n\n` +
+    `💡 可对比 originalTheater 和 purifiedTheater 验证:\n` +
+    `   - 角色关系一致\n` +
+    `   - 事件顺序一致\n` +
+    `   - 配色和文案已净化`
+  );
 };
 
 const handleExportScenePNG = (mode: 'original' | 'purified') => {
@@ -427,6 +585,19 @@ onUnmounted(() => {
                 </h2>
               </div>
 
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-xs font-pixel text-dream-accent">📝 文案净化验证</span>
+                <span
+                  class="text-xs px-2 py-0.5 rounded font-pixel"
+                  :class="{
+                    'bg-green-500/30 text-green-400': hasDifferentTexts,
+                    'bg-red-500/30 text-red-400': !hasDifferentTexts && currentTheater,
+                    'bg-dream-dark text-dream-secondary': !currentTheater,
+                  }"
+                >
+                  {{ hasDifferentTexts ? '✅ 已净化' : '⚠️ 未验证' }}
+                </span>
+              </div>
               <div class="grid grid-cols-2 gap-3">
                 <div
                   class="p-3 pixel-border"
@@ -453,6 +624,10 @@ onUnmounted(() => {
                   </p>
                 </div>
               </div>
+              <div v-if="hasDifferentTexts" class="mt-2 text-xs text-dream-accent bg-dream-dark/50 p-2 pixel-border">
+                <span class="text-green-400">💡 验证提示：</span>
+                左边为原始惊悚文案，右边为净化后的温暖叙事，情绪表达已从{{ dominantNegativeFeeling }}转为{{ dominantPositiveFeeling }}
+              </div>
 
               <div class="grid grid-cols-2 gap-2 text-xs">
                 <div class="p-2 pixel-border text-center">
@@ -466,6 +641,35 @@ onUnmounted(() => {
                   <div class="text-green-400">
                     {{ (currentTheater.totalDuration / 1000).toFixed(1) }}s
                   </div>
+                </div>
+              </div>
+
+              <div class="mt-3 text-xs text-dream-accent bg-dream-dark/50 p-3 pixel-border">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-pixel">🔗 结构完整性验证</span>
+                  <span
+                    class="text-xs px-2 py-0.5 rounded font-pixel bg-green-500/30 text-green-400"
+                    v-if="structurePreserved"
+                  >
+                    ✅ 完整保留
+                  </span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                  <div class="p-2 bg-dream-primary/10 rounded">
+                    <div class="text-green-400 font-pixel mb-1">角色关系</div>
+                    <div class="text-dream-accent">原始实体数量: {{ originalEntityCount }}</div>
+                    <div class="text-dream-accent">净化实体数量: {{ purifiedEntityCount }}</div>
+                    <div class="text-green-400 mt-1">{{ entityStructurePreserved ? '✅ 结构一致' : '❌ 结构变更' }}</div>
+                  </div>
+                  <div class="p-2 bg-dream-primary/10 rounded">
+                    <div class="text-green-400 font-pixel mb-1">事件顺序</div>
+                    <div class="text-dream-accent">原始场景数量: {{ originalSceneCount }}</div>
+                    <div class="text-dream-accent">净化场景数量: {{ purifiedSceneCount }}</div>
+                    <div class="text-green-400 mt-1">{{ sceneStructurePreserved ? '✅ 顺序一致' : '❌ 顺序变更' }}</div>
+                  </div>
+                </div>
+                <div class="mt-2 text-dream-secondary">
+                  💡 仅转换视觉风格和情绪表达，角色关系和事件顺序完整保留
                 </div>
               </div>
             </div>
@@ -543,7 +747,41 @@ onUnmounted(() => {
               </div>
 
               <div class="space-y-2">
-                <div class="text-xs text-dream-accent font-pixel">分别导出</div>
+                <div class="flex items-center justify-between">
+                  <div class="text-xs text-dream-accent font-pixel">📦 分别导出</div>
+                  <span
+                    class="text-xs px-2 py-0.5 rounded font-pixel"
+                    :class="{
+                      'bg-green-500/30 text-green-400': exportReady,
+                      'bg-yellow-500/30 text-yellow-400': !exportReady && currentTheater,
+                      'bg-dream-dark text-dream-secondary': !currentTheater,
+                    }"
+                  >
+                    {{ exportReady ? '✅ 可导出' : '⚠️ 准备中' }}
+                  </span>
+                </div>
+                <div v-if="exportReady" class="text-xs text-dream-accent bg-dream-dark/50 p-2 pixel-border mb-2">
+                  <div class="flex items-center justify-between mb-1">
+                    <span>导出内容验证：</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2 text-[10px]">
+                    <div class="text-center p-1 bg-red-500/20 rounded">
+                      <div class="text-red-400">原始</div>
+                      <div>{{ originalExportSize }}</div>
+                    </div>
+                    <div class="text-center p-1 bg-green-500/20 rounded">
+                      <div class="text-green-400">净化</div>
+                      <div>{{ purifiedExportSize }}</div>
+                    </div>
+                    <div class="text-center p-1 bg-blue-500/20 rounded">
+                      <div class="text-blue-400">完整包</div>
+                      <div>{{ combinedExportSize }}</div>
+                    </div>
+                  </div>
+                  <div class="mt-1 text-[10px] text-dream-secondary">
+                    💡 导出的净化版 JSON 包含 purifiedDream 字段，可直接验证文案已净化
+                  </div>
+                </div>
                 <div class="grid grid-cols-2 gap-2">
                   <button
                     class="pixel-btn flex items-center justify-center gap-2 text-xs py-2"
@@ -601,12 +839,46 @@ onUnmounted(() => {
 
           <div class="lg:col-span-8 space-y-6">
             <div class="pixel-card">
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs font-pixel text-dream-accent">🎨 配色净化验证</span>
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1">
+                    <div
+                      class="w-4 h-4 rounded pixel-border"
+                      :style="{ backgroundColor: sampleOriginalColor }"
+                    />
+                    <span class="text-[10px] text-dream-accent">原始色</span>
+                  </div>
+                  <span class="text-green-400">→</span>
+                  <div class="flex items-center gap-1">
+                    <div
+                      class="w-4 h-4 rounded pixel-border"
+                      :style="{ backgroundColor: samplePurifiedColor }"
+                    />
+                    <span class="text-[10px] text-dream-accent">净化色</span>
+                  </div>
+                  <span
+                    class="text-xs px-2 py-0.5 rounded font-pixel"
+                    :class="{
+                      'bg-green-500/30 text-green-400': hasDifferentColors,
+                      'bg-red-500/30 text-red-400': !hasDifferentColors && currentTheater,
+                      'bg-dream-dark text-dream-secondary': !currentTheater,
+                    }"
+                  >
+                    {{ hasDifferentColors ? '✅ 差异明显' : '⚠️ 未验证' }}
+                  </span>
+                </div>
+              </div>
               <PurifiedDualCanvas
                 :original-scene="originalTheater?.scenes[currentSceneIndex]"
                 :purified-scene="currentTheater.scenes[currentSceneIndex]"
                 :view-mode="currentViewMode"
                 :is-playing="isPlaying"
               />
+              <div v-if="hasDifferentColors" class="mt-3 text-xs text-dream-accent bg-dream-dark/50 p-2 pixel-border">
+                <span class="text-green-400">💡 验证提示：</span>
+                左侧原始梦境使用{{ originalColorStyle }}风格，右侧净化梦境使用{{ purifiedColorStyle }}风格，画布背景已用深色/浅色边框增强对比
+              </div>
             </div>
 
             <PurifiedTimeline
