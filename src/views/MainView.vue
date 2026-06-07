@@ -1,87 +1,44 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref } from 'vue';
 import { useDreamStore } from '@/stores/dream';
-import { useAnimationStore } from '@/stores/animation';
 import { useHistoryStore } from '@/stores/history';
 import DreamInput from '@/components/DreamInput.vue';
 import PixelCanvas from '@/components/PixelCanvas.vue';
-import FrameControl from '@/components/FrameControl.vue';
+import DreamTheaterTimeline from '@/components/DreamTheaterTimeline.vue';
 import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
-import { Wand2, Save, BookOpen, Layers } from '@lucide/vue';
+import { Wand2, Save, BookOpen, Layers, Loader2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
-const animationStore = useAnimationStore();
 const historyStore = useHistoryStore();
 const router = useRouter();
 
 const dreamText = ref('');
-const frameCount = ref(4);
-const fps = ref(4);
-
-let playInterval: number | null = null;
+const sceneCount = ref(4);
+const showExportPanel = ref(false);
 
 const handleGenerate = async () => {
-  const dream = await dreamStore.generateDream(dreamText.value);
-  if (dream) {
-    await animationStore.generateAnimation(frameCount.value, fps.value);
-    startAutoPlay();
-  }
-};
-
-const startAutoPlay = () => {
-  stopAutoPlay();
-  if (animationStore.animation) {
-    animationStore.isPlaying = true;
-    playInterval = window.setInterval(() => {
-      if (animationStore.isPlaying) {
-        animationStore.nextFrame();
-      }
-    }, 1000 / fps.value);
-  }
-};
-
-const stopAutoPlay = () => {
-  if (playInterval) {
-    clearInterval(playInterval);
-    playInterval = null;
-  }
-};
-
-const handleTogglePlay = () => {
-  animationStore.togglePlay();
-  if (animationStore.isPlaying) {
-    startAutoPlay();
-  } else {
-    stopAutoPlay();
-  }
+  if (!dreamText.value.trim()) return;
+  await dreamStore.generateDream(dreamText.value, sceneCount.value);
 };
 
 const handleSave = async () => {
   const saved = await historyStore.saveToHistory();
   if (saved) {
-    alert('保存成功！');
+    alert('已保存到历史记录！');
   } else {
-    alert('保存失败，请先生成动画');
+    alert('请先生成梦境剧场');
   }
 };
 
-watch(fps, () => {
-  if (animationStore.isPlaying) {
-    startAutoPlay();
-  }
-});
+const handleExport = () => {
+  showExportPanel.value = true;
+};
 
-onMounted(() => {
-  if (animationStore.isPlaying) {
-    startAutoPlay();
-  }
-});
-
-onUnmounted(() => {
-  stopAutoPlay();
-});
+const closeExportPanel = () => {
+  showExportPanel.value = false;
+};
 </script>
 
 <template>
@@ -97,16 +54,16 @@ onUnmounted(() => {
             <p class="text-dream-accent text-sm font-body">Pixel Dream Generator</p>
           </div>
         </div>
-        
+
         <nav class="flex items-center gap-4">
-          <button 
+          <button
             class="pixel-btn flex items-center gap-2"
             @click="router.push('/history')"
           >
             <BookOpen class="w-4 h-4" />
             <span>历史</span>
           </button>
-          <button 
+          <button
             class="pixel-btn flex items-center gap-2"
             @click="router.push('/rulesets')"
           >
@@ -116,82 +73,110 @@ onUnmounted(() => {
         </nav>
       </div>
     </header>
-    
+
     <main class="flex-1 p-6">
       <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div class="lg:col-span-4 space-y-6">
-            <DreamInput 
+            <DreamInput
               v-model="dreamText"
-              :is-generating="dreamStore.isGenerating || animationStore.isGenerating"
+              :is-generating="dreamStore.isGenerating"
               :error="dreamStore.error"
               @generate="handleGenerate"
             />
-            
+
             <div class="pixel-card space-y-4">
-              <h3 class="font-pixel text-sm text-dream-secondary">动画设置</h3>
-              
+              <h3 class="font-pixel text-sm text-dream-secondary">分镜设置</h3>
+
               <div class="space-y-2">
-                <label class="block text-sm text-dream-accent">帧数: {{ frameCount }}</label>
-                <input 
-                  v-model.number="frameCount" 
-                  type="range" 
-                  min="3" 
-                  max="5" 
+                <label class="block text-sm text-dream-accent">分镜数量: {{ sceneCount }} 幕</label>
+                <input
+                  v-model.number="sceneCount"
+                  type="range"
+                  min="3"
+                  max="5"
                   class="pixel-slider"
                 />
               </div>
-              
-              <div class="space-y-2">
-                <label class="block text-sm text-dream-accent">FPS: {{ fps }}</label>
-                <input 
-                  v-model.number="fps" 
-                  type="range" 
-                  min="1" 
-                  max="12" 
-                  class="pixel-slider"
-                />
+
+              <div class="flex gap-2">
+                <button
+                  class="flex-1 pixel-btn flex items-center justify-center gap-2"
+                  :disabled="!dreamStore.currentDreamTheater"
+                  @click="handleSave"
+                >
+                  <Save class="w-4 h-4" />
+                  保存
+                </button>
+                <button
+                  class="flex-1 pixel-btn-primary flex items-center justify-center gap-2"
+                  :disabled="!dreamStore.currentDreamTheater"
+                  @click="handleExport"
+                >
+                  <Loader2
+                    v-if="dreamStore.isGenerating"
+                    class="w-4 h-4 animate-spin"
+                  />
+                  <template v-else>导出</template>
+                </button>
               </div>
-              
-              <button 
-                class="pixel-btn w-full flex items-center justify-center gap-2"
-                :disabled="!animationStore.animation"
-                @click="handleSave"
-              >
-                <Save class="w-4 h-4" />
-                保存到历史
-              </button>
             </div>
-            
-            <SpriteEditor v-if="animationStore.selectedSprite" />
+
+            <SpriteEditor v-if="dreamStore.selectedSprite" />
           </div>
-          
+
           <div class="lg:col-span-8 space-y-6">
             <div class="pixel-card">
               <PixelCanvas />
             </div>
-            
-            <FrameControl 
-              v-if="animationStore.animation"
-              :current-frame="animationStore.currentFrameIndex + 1"
-              :total-frames="animationStore.frameCount"
-              :is-playing="animationStore.isPlaying"
-              @frame-change="animationStore.setCurrentFrame($event - 1)"
-              @toggle-play="handleTogglePlay"
-              @prev="animationStore.prevFrame"
-              @next="animationStore.nextFrame"
-              @add-frame="animationStore.addFrame"
-              @remove-frame="animationStore.removeFrame(animationStore.currentFrameIndex)"
-              @duplicate-frame="animationStore.duplicateFrame(animationStore.currentFrameIndex)"
+
+            <DreamTheaterTimeline
+              v-if="dreamStore.currentDreamTheater"
+              :theater="dreamStore.currentDreamTheater"
+              :current-index="dreamStore.currentSceneIndex"
+              :is-playing="dreamStore.isPlaying"
+              :is-generating="dreamStore.isGenerating"
+              @update:current-index="dreamStore.setCurrentScene"
+              @play="dreamStore.togglePlay"
+              @prev="dreamStore.prevScene"
+              @next="dreamStore.nextScene"
+              @regenerate="dreamStore.regenerateScene"
+              @update:scene-title="dreamStore.updateSceneTitle"
+              @update:scene-description="dreamStore.updateSceneDescription"
+              @update:scene-duration="dreamStore.setSceneDuration"
+              @add-scene="dreamStore.addScene"
+              @remove-scene="dreamStore.removeScene"
+              @duplicate-scene="dreamStore.duplicateScene"
+              @move-scene="dreamStore.moveScene"
             />
-            
-            <ExportPanel 
-              v-if="animationStore.animation"
-              :animation="animationStore.animation"
+
+            <ExportPanel
+              v-if="dreamStore.currentDreamTheater"
+              :theater="dreamStore.currentDreamTheater"
+              @close="closeExportPanel"
             />
           </div>
         </div>
       </div>
     </main>
+
+    <div
+      v-if="showExportPanel && dreamStore.currentDreamTheater"
+      class="fixed inset-0 bg-dream-dark/90 flex items-center justify-center z-50 p-4"
+      @click.self="closeExportPanel"
+    >
+      <div class="relative max-w-3xl w-full max-h-[90vh] overflow-auto">
+        <button
+          class="absolute -top-2 -right-2 pixel-btn w-8 h-8 flex items-center justify-center z-10"
+          @click="closeExportPanel"
+        >
+          ✕
+        </button>
+        <ExportPanel
+          :theater="dreamStore.currentDreamTheater"
+          @close="closeExportPanel"
+        />
+      </div>
+    </div>
   </div>
 </template>
