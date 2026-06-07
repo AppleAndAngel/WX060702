@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { ArrowLeft, BookOpen } from 'lucide-vue-next';
+import { ArrowLeft, BookOpen, Sparkles } from 'lucide-vue-next';
 import HistoryPanel from '@/components/HistoryPanel.vue';
 
 const router = useRouter();
@@ -28,6 +28,15 @@ const router = useRouter();
             </div>
           </div>
         </div>
+        <nav class="flex items-center gap-4">
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/purifier')"
+          >
+            <Sparkles class="w-4 h-4" />
+            <span>噩梦净化</span>
+          </button>
+        </nav>
       </div>
     </header>
 

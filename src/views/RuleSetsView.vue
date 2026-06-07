@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRuleSetStore } from '@/stores/ruleSet';
-import { ArrowLeft, Layers, Download, Upload, Trash2, Check } from 'lucide-vue-next';
+import { ArrowLeft, Layers, Download, Upload, Trash2, Check, Sparkles } from 'lucide-vue-next';
 import { downloadBlob } from '@/utils/pixelUtils';
 
 const router = useRouter();
@@ -80,6 +80,13 @@ const renderPalettePreview = (palette: string[]) => {
           </div>
         </div>
 
+        <button
+          class="pixel-btn flex items-center gap-2"
+          @click="router.push('/purifier')"
+        >
+          <Sparkles class="w-4 h-4" />
+          <span>噩梦净化</span>
+        </button>
         <button
           class="pixel-btn flex items-center gap-2"
           @click="triggerImport"

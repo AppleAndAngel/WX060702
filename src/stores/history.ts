@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { DreamTheater, DualDreamTheater, BranchingEndingsTheater } from '@/types';
+import type { DreamTheater, DualDreamTheater, BranchingEndingsTheater, PurifiedDreamTheater } from '@/types';
 import { useDreamStore } from './dream';
 import { generateId } from '@/utils/pixelUtils';
 
@@ -11,6 +11,7 @@ export interface HistoryItem {
   thumbnail: string;
   isDualDream?: boolean;
   isBranchingEndings?: boolean;
+  isPurified?: boolean;
 }
 
 export interface DualDreamHistoryItem extends HistoryItem {
@@ -22,6 +23,12 @@ export interface BranchingEndingsHistoryItem extends HistoryItem {
   theater: BranchingEndingsTheater;
   isBranchingEndings: true;
   selectedEndingThumbnail?: string;
+}
+
+export interface PurifiedDreamHistoryItem extends HistoryItem {
+  theater: PurifiedDreamTheater;
+  isPurified: true;
+  originalThumbnail?: string;
 }
 
 export const useHistoryStore = defineStore('history', () => {
@@ -282,6 +289,87 @@ export const useHistoryStore = defineStore('history', () => {
     return sortedHistory.value.filter(h => h.isBranchingEndings) as BranchingEndingsHistoryItem[];
   });
 
+  const purifiedDreamHistory = computed(() => {
+    return sortedHistory.value.filter(h => h.isPurified) as PurifiedDreamHistoryItem[];
+  });
+
+  const generatePurifiedDreamThumbnail = (theater: PurifiedDreamTheater): string => {
+    return generateThumbnail(theater);
+  };
+
+  const savePurifiedDreamToHistory = async (purifiedTheater: PurifiedDreamTheater): Promise<boolean> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const theaterToSave = JSON.parse(JSON.stringify(purifiedTheater));
+      theaterToSave.isPlaying = false;
+
+      const thumbnail = generatePurifiedDreamThumbnail(theaterToSave);
+      const originalThumbnail = generateThumbnail(theaterToSave.originalTheater);
+
+      const existingIndex = history.value.findIndex(
+        h => h.theater.id === theaterToSave.id
+      );
+
+      const historyItem: PurifiedDreamHistoryItem = {
+        id: generateId(),
+        theater: theaterToSave,
+        savedAt: Date.now(),
+        thumbnail,
+        isPurified: true,
+        originalThumbnail,
+      };
+
+      if (existingIndex !== -1) {
+        history.value[existingIndex] = historyItem;
+      } else {
+        history.value.unshift(historyItem);
+      }
+
+      return true;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '保存失败';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loadPurifiedDreamFromHistory = (historyId: string): PurifiedDreamTheater | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isPurified) {
+      error.value = '未找到该净化梦境记录';
+      return null;
+    }
+
+    try {
+      const theater = JSON.parse(JSON.stringify(item.theater)) as PurifiedDreamTheater;
+      theater.isPlaying = false;
+      theater.currentSceneIndex = 0;
+      return theater;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '加载失败';
+      return null;
+    }
+  };
+
+  const exportPurifiedDreamItem = (historyId: string): string | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isPurified) return null;
+
+    const exportData = {
+      version: '1.0',
+      type: 'purified-dream',
+      exportedAt: Date.now(),
+      purifiedTheater: item.theater,
+    };
+
+    return JSON.stringify(exportData, null, 2);
+  };
+
   const generateBranchingEndingsThumbnail = (theater: BranchingEndingsTheater): string => {
     return generateThumbnail(theater.baseTheater);
   };
@@ -382,17 +470,21 @@ export const useHistoryStore = defineStore('history', () => {
     dualDreamHistory,
     singleDreamHistory,
     branchingEndingsHistory,
+    purifiedDreamHistory,
     saveToHistory,
     saveDualDreamToHistory,
     saveBranchingEndingsToHistory,
+    savePurifiedDreamToHistory,
     loadFromHistory,
     loadDualDreamFromHistory,
     loadBranchingEndingsFromHistory,
+    loadPurifiedDreamFromHistory,
     removeFromHistory,
     clearHistory,
     exportHistoryItem,
     exportDualDreamItem,
     exportBranchingEndingsItem,
+    exportPurifiedDreamItem,
     importHistoryItem,
     getHistoryItem,
     searchHistory,

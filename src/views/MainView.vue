@@ -9,7 +9,7 @@ import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
 import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
 import DreamMapView from '@/components/DreamMapView.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch } from 'lucide-vue-next';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch, Sparkles } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -99,6 +99,13 @@ const handleOpenDreamMap = () => {
           >
             <Layers class="w-4 h-4" />
             <span>规则集</span>
+          </button>
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/purifier')"
+          >
+            <Sparkles class="w-4 h-4" />
+            <span>噩梦净化</span>
           </button>
         </nav>
       </div>

@@ -12,6 +12,7 @@ import {
   GitCompare,
   Users,
   GitBranch,
+  Sparkles,
 } from 'lucide-vue-next';
 import { useDualDreamStore } from '@/stores/dualDream';
 import { useRuleSetStore } from '@/stores/ruleSet';
@@ -179,6 +180,13 @@ onUnmounted(() => {
           >
             <Layers class="w-4 h-4" />
             <span>规则集</span>
+          </button>
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/purifier')"
+          >
+            <Sparkles class="w-4 h-4" />
+            <span>噩梦净化</span>
           </button>
         </nav>
       </div>
