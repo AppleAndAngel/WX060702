@@ -448,8 +448,8 @@ onUnmounted(() => {
                     <div class="w-3 h-3 rounded-full bg-green-400" />
                     <span class="text-xs font-pixel text-green-400">净化版本 ✨</span>
                   </div>
-                  <p class="text-xs text-dream-accent line-clamp-2">
-                    {{ currentTheater.originalDream }}
+                  <p class="text-xs text-green-300 whitespace-pre-line line-clamp-3">
+                    {{ currentTheater.purifiedDream }}
                   </p>
                 </div>
               </div>

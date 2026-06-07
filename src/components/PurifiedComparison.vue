@@ -195,29 +195,42 @@ watch(() => props.visible, (newVal) => {
 
               <div v-if="showColorTransforms && currentSceneDiff.colorChanges.length > 0" class="space-y-2">
                 <h5 class="text-xs font-pixel text-dream-secondary">颜色转换</h5>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div
                     v-for="(change, index) in currentSceneDiff.colorChanges"
                     :key="index"
-                    class="flex items-center gap-3 p-2 pixel-border"
+                    class="flex items-center gap-3 p-3 pixel-border bg-dream-dark/50 hover:bg-dream-dark transition-all"
                   >
                     <div class="flex items-center gap-2">
                       <div
-                        class="w-6 h-6 pixel-border"
-                        :style="{ backgroundColor: change.original }"
+                        class="w-10 h-10 pixel-border shadow-lg transition-transform hover:scale-110"
+                        :style="{
+                          backgroundColor: change.original,
+                          boxShadow: `0 0 15px ${change.original}40`
+                        }"
                       />
-                      <span class="text-xs text-dream-accent">→</span>
+                      <div class="flex flex-col items-center">
+                        <span class="text-lg text-green-400">→</span>
+                        <span class="text-[10px] text-dream-accent">净化</span>
+                      </div>
                       <div
-                        class="w-6 h-6 pixel-border"
-                        :style="{ backgroundColor: change.purified }"
+                        class="w-10 h-10 pixel-border shadow-lg transition-transform hover:scale-110"
+                        :style="{
+                          backgroundColor: change.purified,
+                          boxShadow: `0 0 15px ${change.purified}60`
+                        }"
                       />
                     </div>
-                    <span class="text-xs text-dream-secondary" v-if="change.reason">
-                      {{ change.reason }}
-                    </span>
-                    <span class="text-xs text-dream-accent" v-else>
-                      {{ change.original }} → {{ change.purified }}
-                    </span>
+                    <div class="flex-1 min-w-0">
+                      <span class="text-xs text-green-400 font-pixel block" v-if="change.reason">
+                        {{ change.reason }}
+                      </span>
+                      <span class="text-[10px] text-dream-accent block mt-1">
+                        <span class="text-red-400">{{ change.original }}</span>
+                        <span class="mx-1">→</span>
+                        <span class="text-green-400">{{ change.purified }}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

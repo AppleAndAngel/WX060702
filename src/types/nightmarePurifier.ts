@@ -17,6 +17,7 @@ export interface PurifiedScene extends DreamScene {
 export interface PurifiedDreamTheater extends DreamTheater {
   isPurified: true;
   originalTheater: DreamTheater;
+  purifiedDream: string;
   scenes: PurifiedScene[];
   purificationIntensity: PurifyIntensity;
   currentViewMode: PurifyViewMode;

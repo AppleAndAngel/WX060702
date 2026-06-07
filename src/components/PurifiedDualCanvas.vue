@@ -103,12 +103,14 @@ onMounted(() => {
       <div class="canvas-label original">
         <span class="font-pixel text-xs">原始梦境</span>
       </div>
-      <canvas
-        ref="originalCanvas"
-        class="pixel-canvas"
-        :class="{ 'cursor-pointer': true }"
-        @click="handleClick"
-      />
+      <div class="original-bg">
+        <canvas
+          ref="originalCanvas"
+          class="pixel-canvas"
+          :class="{ 'cursor-pointer': true }"
+          @click="handleClick"
+        />
+      </div>
     </div>
 
     <div
@@ -119,12 +121,14 @@ onMounted(() => {
         <span class="font-pixel text-xs">净化梦境</span>
         <span class="ml-2 text-xs">✨</span>
       </div>
-      <canvas
-        ref="purifiedCanvas"
-        class="pixel-canvas"
-        :class="{ 'cursor-pointer': true }"
-        @click="handleClick"
-      />
+      <div class="purified-bg">
+        <canvas
+          ref="purifiedCanvas"
+          class="pixel-canvas"
+          :class="{ 'cursor-pointer': true }"
+          @click="handleClick"
+        />
+      </div>
     </div>
 
     <div
@@ -135,12 +139,14 @@ onMounted(() => {
         <div class="canvas-label original">
           <span class="font-pixel text-xs">原始梦境</span>
         </div>
-        <canvas
-          ref="originalCanvas"
-          class="pixel-canvas"
-          :class="{ 'cursor-pointer': true }"
-          @click="handleClick"
-        />
+        <div class="original-bg">
+          <canvas
+            ref="originalCanvas"
+            class="pixel-canvas"
+            :class="{ 'cursor-pointer': true }"
+            @click="handleClick"
+          />
+        </div>
       </div>
 
       <div class="compare-divider">
@@ -154,12 +160,14 @@ onMounted(() => {
           <span class="font-pixel text-xs">净化梦境</span>
           <span class="ml-2 text-xs">✨</span>
         </div>
-        <canvas
-          ref="purifiedCanvas"
-          class="pixel-canvas"
-          :class="{ 'cursor-pointer': true }"
-          @click="handleClick"
-        />
+        <div class="purified-bg">
+          <canvas
+            ref="purifiedCanvas"
+            class="pixel-canvas"
+            :class="{ 'cursor-pointer': true }"
+            @click="handleClick"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -246,11 +254,50 @@ onMounted(() => {
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transition: all 0.3s ease;
 }
 
 .pixel-canvas:hover {
   border-color: var(--dream-primary);
   box-shadow: 4px 4px 0 rgba(233, 69, 96, 0.3);
+}
+
+.compare-side .pixel-canvas {
+  transition: all 0.3s ease;
+}
+
+.compare-side:first-child .pixel-canvas {
+  border: 4px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2), 4px 4px 0 rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%);
+}
+
+.compare-side:last-child .pixel-canvas {
+  border: 4px solid rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 4px 4px 0 rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe4c4 100%);
+}
+
+.canvas-wrapper.compare:hover .compare-side:first-child .pixel-canvas {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.4), 4px 4px 0 rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+}
+
+.canvas-wrapper.compare:hover .compare-side:last-child .pixel-canvas {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 4px 4px 0 rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+}
+
+.original-bg {
+  background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.purified-bg {
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe4c4 100%);
+  padding: 8px;
+  border-radius: 4px;
 }
 
 @keyframes pulse {

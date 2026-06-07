@@ -55,21 +55,26 @@ const entitySofteningMap: Record<string, { type: string; name: string; reason: s
 };
 
 const descriptionSofteningPatterns: { pattern: RegExp; replacement: string; note: string }[] = [
-  { pattern: /恐怖的|可怕的|惊悚的|吓人的|令人恐惧的/g, replacement: '神秘的', note: '消除恐怖形容词' },
-  { pattern: /追杀|追逐|逃跑|逃离/g, replacement: '漫步', note: '紧张追逐 → 悠闲漫步' },
-  { pattern: /尖叫|大喊|哭泣|恐惧|害怕/g, replacement: '微笑', note: '恐惧情绪 → 温暖微笑' },
-  { pattern: /黑暗|漆黑|阴暗|阴沉/g, replacement: '温暖', note: '黑暗 → 温暖' },
-  { pattern: /血|流血|尸体|死亡|被杀/g, replacement: '花朵', note: '死亡意象 → 花朵' },
-  { pattern: /怪物|恶魔|鬼魂|幽灵|妖怪/g, replacement: '小伙伴', note: '鬼怪 → 小伙伴' },
-  { pattern: /攻击|打斗|战斗|伤害|威胁/g, replacement: '拥抱', note: '攻击 → 拥抱' },
-  { pattern: /被困|囚禁|无法逃脱/g, replacement: '安然休憩', note: '被困 → 休憩' },
-  { pattern: /冰冷|寒冷|刺骨/g, replacement: '温暖', note: '冰冷 → 温暖' },
-  { pattern: /破碎|毁灭|崩塌|坍塌/g, replacement: '盛开', note: '毁灭 → 盛开' },
+  { pattern: /恐怖的|可怕的|惊悚的|吓人的|令人恐惧的|令人毛骨悚然的/g, replacement: '奇妙而温柔的', note: '消除恐怖形容词' },
+  { pattern: /追杀|追逐|逃跑|逃离|狂奔/g, replacement: '悠闲漫步', note: '紧张追逐 → 悠闲漫步' },
+  { pattern: /尖叫|大喊|哭泣|恐惧|害怕|惊恐|惶恐/g, replacement: '轻声微笑', note: '恐惧情绪 → 温暖微笑' },
+  { pattern: /黑暗|漆黑|阴暗|阴沉|昏暗|黑洞/g, replacement: '温暖明亮', note: '黑暗 → 温暖光明' },
+  { pattern: /血|流血|血泊|血迹|尸体|死亡|被杀|惨死|尸骨/g, replacement: '美丽的花朵', note: '死亡意象 → 花朵' },
+  { pattern: /怪物|恶魔|鬼魂|幽灵|妖怪|怪兽|恶鬼|邪灵/g, replacement: '可爱的小伙伴', note: '鬼怪 → 可爱小伙伴' },
+  { pattern: /攻击|打斗|战斗|伤害|威胁|袭击|扑向|撕扯/g, replacement: '温柔拥抱', note: '攻击 → 拥抱' },
+  { pattern: /被困|囚禁|无法逃脱|困住|束缚|枷锁/g, replacement: '安然休憩', note: '被困 → 休憩' },
+  { pattern: /冰冷|寒冷|刺骨|冰寒|冻僵/g, replacement: '温暖和煦', note: '冰冷 → 温暖' },
+  { pattern: /破碎|毁灭|崩塌|坍塌|粉碎|毁坏/g, replacement: '绚烂盛开', note: '毁灭 → 盛开' },
   { pattern: /噩梦|恶梦/g, replacement: '美梦', note: '噩梦 → 美梦' },
-  { pattern: /诡异|怪异|反常/g, replacement: '奇妙', note: '诡异 → 奇妙' },
-  { pattern: /压抑|窒息|喘不过气/g, replacement: '放松', note: '压抑 → 放松' },
-  { pattern: /孤独|孤单|寂寞/g, replacement: '被陪伴', note: '孤独 → 陪伴' },
-  { pattern: /绝望|无助|崩溃/g, replacement: '充满希望', note: '绝望 → 希望' },
+  { pattern: /诡异|怪异|反常|邪门|不对劲/g, replacement: '奇妙而美好', note: '诡异 → 奇妙' },
+  { pattern: /压抑|窒息|喘不过气|憋闷|沉闷/g, replacement: '放松自在', note: '压抑 → 放松' },
+  { pattern: /孤独|孤单|寂寞|无依无靠/g, replacement: '被温柔陪伴', note: '孤独 → 陪伴' },
+  { pattern: /绝望|无助|崩溃|万念俱灰|走投无路/g, replacement: '充满希望与勇气', note: '绝望 → 希望' },
+  { pattern: /血淋淋|鲜红|暗红|血色/g, replacement: '粉嫩的', note: '血色 → 柔和粉色' },
+  { pattern: /刺耳|尖锐|轰鸣|巨响|咆哮/g, replacement: '悦耳的', note: '刺耳声音 → 悦耳声音' },
+  { pattern: /潮湿|湿滑|黏腻|腥臭/g, replacement: '清新的', note: '不适触感 → 清新' },
+  { pattern: /腐烂|发霉|恶臭|恶心/g, replacement: '芬芳的', note: '腐坏意象 → 芬芳' },
+  { pattern: /锐利|锋利|尖刀|刀刃/g, replacement: '柔软的', note: '锐利 → 柔软' },
 ];
 
 const healingTitles = [
@@ -92,6 +97,54 @@ const healingDescriptions = [
   '柔软的云朵轻轻簇拥，带来安详的梦境...',
   '彩虹横跨天际，连接着希望与美好...',
   '小动物们围绕在身边，带来纯真的快乐...',
+];
+
+const overviewHealingTemplates = [
+  '这是一段关于{coreTheme}的温柔旅程，{emotion}的经历在治愈之光中转化为{positiveFeeling}的美好回忆...',
+  '曾经{negativeFeeling}的梦境，如今化作{positiveFeeling}的画面，{coreTheme}的故事以温柔的方式重新展开...',
+  '在心灵的净化中，{coreTheme}的经历变得{positiveFeeling}，所有的{negativeFeeling}都被温柔化解...',
+  '这是一个关于勇气与治愈的故事，{coreTheme}的旅程从{negativeFeeling}走向{positiveFeeling}...',
+  '在温暖的治愈之光中，{coreTheme}的经历被重新诠释，化作{positiveFeeling}的美好梦境...',
+];
+
+const emotionMapping: Record<string, string> = {
+  '黑暗': '温暖光明',
+  '恐惧': '安心',
+  '惊悚': '温柔',
+  '压抑': '舒畅',
+  '恐怖': '美好',
+  '可怕': '可爱',
+  '孤独': '陪伴',
+  '绝望': '希望',
+  '冰冷': '温暖',
+  '血腥': '芬芳',
+  '诡异': '奇妙',
+  '诡异': '奇妙',
+  '悲伤': '喜悦',
+  '愤怒': '平和',
+  '焦虑': '宁静',
+};
+
+const positiveFeelings = [
+  '温暖治愈',
+  '宁静安详',
+  '美好纯真',
+  '充满希望',
+  '温柔甜蜜',
+  '安心舒适',
+  '愉悦轻松',
+  '平和喜悦',
+];
+
+const negativeFeelings = [
+  '恐惧不安',
+  '压抑沉重',
+  '惊悚吓人',
+  '孤独无助',
+  '绝望崩溃',
+  '冰冷刺骨',
+  '血腥恐怖',
+  '诡异离奇',
 ];
 
 export class NightmarePurifier {
@@ -126,12 +179,14 @@ export class NightmarePurifier {
     }
 
     const totalDuration = purifiedScenes.reduce((sum, s) => sum + s.duration, 0);
+    const purifiedDream = this.rewriteOverview(theater.originalDream, options.intensity);
 
     const purifiedTheater: PurifiedDreamTheater = {
       ...theater,
       id: generateId(),
       scenes: purifiedScenes,
       originalDream: theater.originalDream,
+      purifiedDream,
       title: this.generateHealingTitle(theater.title),
       isPurified: true,
       originalTheater: theater,
@@ -332,20 +387,110 @@ export class NightmarePurifier {
     let b = parseInt(color.slice(5, 7), 16);
 
     const intensityFactor = {
-      mild: 0.3,
-      moderate: 0.5,
-      strong: 0.7,
+      mild: 0.4,
+      moderate: 0.65,
+      strong: 0.9,
     }[intensity];
 
-    r = Math.round(r + (255 - r) * intensityFactor * 0.6);
-    g = Math.round(g + (200 - g) * intensityFactor * 0.5);
-    b = Math.round(b + (180 - b) * intensityFactor * 0.4);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    const isRedDominant = r > g + 30 && r > b + 30;
+    const isBlueDominant = b > r + 30 && b > g + 30;
+    const isGreenDominant = g > r + 30 && g > b + 30;
 
-    r = Math.min(255, Math.max(200, r));
-    g = Math.min(255, Math.max(150, g));
-    b = Math.min(255, Math.max(120, b));
+    if (brightness < 80) {
+      r = Math.min(255, Math.round(255 - (255 - r) * (1 - intensityFactor) * 0.3));
+      g = Math.min(255, Math.round(220 - (220 - g) * (1 - intensityFactor) * 0.3));
+      b = Math.min(255, Math.round(190 - (190 - b) * (1 - intensityFactor) * 0.3));
+    } else if (isRedDominant && r > 150) {
+      const targetR = Math.min(255, 200 + Math.floor(Math.random() * 30));
+      const targetG = Math.min(255, 150 + Math.floor(Math.random() * 40));
+      const targetB = Math.min(255, 150 + Math.floor(Math.random() * 40));
+      r = Math.round(r + (targetR - r) * intensityFactor);
+      g = Math.round(g + (targetG - g) * intensityFactor);
+      b = Math.round(b + (targetB - b) * intensityFactor);
+    } else if (isBlueDominant && b > 150) {
+      const targetR = Math.min(255, 180 + Math.floor(Math.random() * 40));
+      const targetG = Math.min(255, 220 + Math.floor(Math.random() * 30));
+      const targetB = Math.min(255, 200 + Math.floor(Math.random() * 30));
+      r = Math.round(r + (targetR - r) * intensityFactor);
+      g = Math.round(g + (targetG - g) * intensityFactor);
+      b = Math.round(b + (targetB - b) * intensityFactor);
+    } else if (isGreenDominant && g < 100) {
+      const targetR = Math.min(255, 168 + Math.floor(Math.random() * 40));
+      const targetG = Math.min(255, 230 + Math.floor(Math.random() * 25));
+      const targetB = Math.min(255, 207 + Math.floor(Math.random() * 30));
+      r = Math.round(r + (targetR - r) * intensityFactor);
+      g = Math.round(g + (targetG - g) * intensityFactor);
+      b = Math.round(b + (targetB - b) * intensityFactor);
+    } else {
+      r = Math.min(255, Math.round(r + (255 - r) * intensityFactor * 0.5));
+      g = Math.min(255, Math.round(g + (230 - g) * intensityFactor * 0.4));
+      b = Math.min(255, Math.round(b + (200 - b) * intensityFactor * 0.3));
+    }
+
+    r = Math.max(150, Math.min(255, r));
+    g = Math.max(140, Math.min(255, g));
+    b = Math.max(130, Math.min(255, b));
+
+    if (intensity === 'strong') {
+      r = Math.max(200, r);
+      g = Math.max(180, g);
+      b = Math.max(160, b);
+    }
 
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+
+  private rewriteOverview(original: string, intensity: PurifyIntensity): string {
+    let result = original;
+
+    for (const pattern of descriptionSofteningPatterns) {
+      result = result.replace(pattern.pattern, pattern.replacement);
+    }
+
+    if (result === original) {
+      const coreTheme = this.extractCoreTheme(original);
+      const negativeFeeling = this.detectDominantNegativeFeeling(original);
+      const positiveFeeling = positiveFeelings[Math.floor(Math.random() * positiveFeelings.length)];
+      const emotion = negativeFeelings[Math.floor(Math.random() * negativeFeelings.length)];
+      const template = overviewHealingTemplates[Math.floor(Math.random() * overviewHealingTemplates.length)];
+
+      result = template
+        .replace('{coreTheme}', coreTheme)
+        .replace('{emotion}', emotion)
+        .replace('{negativeFeeling}', negativeFeeling)
+        .replace('{positiveFeeling}', positiveFeeling);
+    } else {
+      const intensityPrefix = {
+        mild: '在温柔的净化下，',
+        moderate: '在治愈之光的照耀下，',
+        strong: '✨ 经过深度净化 ✨\n',
+      }[intensity];
+
+      const suffix = '\n\n💚 这是一个充满温暖与希望的治愈版本，所有的不安都已被温柔化解。';
+      result = intensityPrefix + result + suffix;
+    }
+
+    return result;
+  }
+
+  private extractCoreTheme(text: string): string {
+    const keywords = ['走廊', '森林', '城堡', '城市', '大海', '天空', '学校', '家', '梦境', '世界', '旅程', '冒险', '故事', '回忆'];
+    for (const keyword of keywords) {
+      if (text.includes(keyword)) {
+        return keyword + '之旅';
+      }
+    }
+    return '心灵成长';
+  }
+
+  private detectDominantNegativeFeeling(text: string): string {
+    for (const [negative, positive] of Object.entries(emotionMapping)) {
+      if (text.includes(negative)) {
+        return negativeFeelings.find(f => f.includes(negative)) || '恐惧不安';
+      }
+    }
+    return negativeFeelings[Math.floor(Math.random() * negativeFeelings.length)];
   }
 
   private rewriteDescription(original: string, actNumber: number, totalScenes: number): string {
@@ -359,19 +504,25 @@ export class NightmarePurifier {
       }
     }
 
-    if (result === original) {
+    if (result === original || result.length < 10) {
       const healingDescIndex = (actNumber - 1) % healingDescriptions.length;
       const baseHealing = healingDescriptions[healingDescIndex];
 
       if (actNumber === 1) {
-        result = `梦境的开始，${baseHealing}`;
+        result = `🌅 梦境的开始，${baseHealing}`;
       } else if (actNumber === totalScenes) {
-        result = `梦境的终章，${baseHealing}，一切都归于美好与安宁...`;
+        result = `🌸 梦境的终章，${baseHealing}，一切都归于美好与安宁...`;
       } else {
         const progress = Math.round((actNumber / totalScenes) * 100);
-        result = `${baseHealing}（净化进度 ${progress}%）`;
+        const emojis = ['✨', '💫', '🌟', '💖', '🌈'];
+        const emoji = emojis[actNumber % emojis.length];
+        result = `${emoji} ${baseHealing}（净化进度 ${progress}%）`;
       }
       appliedNotes.push('使用治愈描述模板');
+    } else {
+      const emojis = ['✨', '💫', '🌟', '💖', '🌈', '🌸', '🌅', '🦋'];
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      result = `${emoji} ${result}`;
     }
 
     return result;
