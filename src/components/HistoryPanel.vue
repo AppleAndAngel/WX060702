@@ -3,14 +3,18 @@ import { ref, computed } from 'vue';
 import { useHistoryStore } from '@/stores/history';
 import { useDreamStore } from '@/stores/dream';
 import { useBranchingEndingsStore } from '@/stores/branchingEndings';
+import { useLucidDreamRewriteStore } from '@/stores/lucidDreamRewrite';
+import { useNightmarePurifierStore } from '@/stores/nightmarePurifier';
 import { useRouter } from 'vue-router';
-import { Search, Trash2, Download, Upload, X, Clock, Film, BookMarked, Users, GitBranch, Wand2 } from 'lucide-vue-next';
-import type { HistoryItem, BranchingEndingsHistoryItem, DualDreamHistoryItem } from '@/stores/history';
-import type { BranchingEndingsTheater } from '@/types';
+import { Search, Trash2, Download, Upload, X, Clock, Film, BookMarked, Users, GitBranch, Wand2, Moon, Sun } from 'lucide-vue-next';
+import type { HistoryItem, BranchingEndingsHistoryItem, DualDreamHistoryItem, LucidDreamRewriteHistoryItem, PurifiedDreamHistoryItem } from '@/stores/history';
+import type { BranchingEndingsTheater, LucidDreamRewriteTheater, PurifiedDreamTheater } from '@/types';
 
 const historyStore = useHistoryStore();
 const dreamStore = useDreamStore();
 const branchingStore = useBranchingEndingsStore();
+const lucidRewriteStore = useLucidDreamRewriteStore();
+const purifierStore = useNightmarePurifierStore();
 const router = useRouter();
 
 const searchQuery = ref('');
@@ -43,6 +47,14 @@ const getTheaterForDisplay = (item: HistoryItem) => {
     const branchingItem = item as BranchingEndingsHistoryItem;
     return branchingItem.theater.baseTheater;
   }
+  if (item.isLucidDreamRewrite) {
+    const rewriteItem = item as LucidDreamRewriteHistoryItem;
+    return rewriteItem.theater.originalTheater;
+  }
+  if (item.isPurified) {
+    const purifiedItem = item as PurifiedDreamHistoryItem;
+    return purifiedItem.theater.purifiedTheater;
+  }
   return item.theater;
 };
 
@@ -52,6 +64,22 @@ const getEndingCount = (item: HistoryItem) => {
     return branchingItem.theater.endings?.length || 0;
   }
   return 0;
+};
+
+const getBranchCount = (item: HistoryItem) => {
+  if (item.isLucidDreamRewrite) {
+    const rewriteItem = item as LucidDreamRewriteHistoryItem;
+    return rewriteItem.theater.branches?.length || 0;
+  }
+  return 0;
+};
+
+const getPurificationTheme = (item: HistoryItem) => {
+  if (item.isPurified) {
+    const purifiedItem = item as PurifiedDreamHistoryItem;
+    return purifiedItem.theater.selectedTheme?.name || '';
+  }
+  return '';
 };
 
 const loadHistoryItem = (item: HistoryItem) => {
@@ -65,6 +93,18 @@ const loadHistoryItem = (item: HistoryItem) => {
   } else if (item.isDualDream) {
     historyStore.loadDualDreamFromHistory(item.id);
     router.push('/dual');
+  } else if (item.isLucidDreamRewrite) {
+    const theater = historyStore.loadLucidDreamRewriteFromHistory(item.id);
+    if (theater) {
+      lucidRewriteStore.loadRewriteTheater(theater);
+      router.push('/lucid-rewrite');
+    }
+  } else if (item.isPurified) {
+    const theater = historyStore.loadPurifiedDreamFromHistory(item.id);
+    if (theater) {
+      purifierStore.loadPurifiedTheater(theater);
+      router.push('/purifier');
+    }
   } else {
     historyStore.loadFromHistory(item.id);
     router.push('/');
@@ -100,6 +140,69 @@ const exportBranchingEndingsItem = (item: HistoryItem, event: Event) => {
     const a = document.createElement('a');
     a.href = url;
     a.download = `${getTheaterForDisplay(item).title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_多结局.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+};
+
+const loadSelectedRewriteBranch = (item: HistoryItem, event: Event) => {
+  event.stopPropagation();
+  if (!item.isLucidDreamRewrite) return;
+  
+  const rewriteItem = item as LucidDreamRewriteHistoryItem;
+  const theater = historyStore.loadLucidDreamRewriteFromHistory(item.id);
+  if (!theater) return;
+  
+  const selectedBranch = theater.branches.find(b => b.id === theater.selectedBranchId);
+  if (selectedBranch) {
+    const theaterToLoad = JSON.parse(JSON.stringify(selectedBranch.fullTheater));
+    theaterToLoad.isPlaying = false;
+    theaterToLoad.currentSceneIndex = 0;
+    dreamStore.loadTheater(theaterToLoad);
+    router.push('/');
+  } else {
+    alert('请先选择一个改写分支');
+  }
+};
+
+const loadPurifiedToDream = (item: HistoryItem, event: Event) => {
+  event.stopPropagation();
+  if (!item.isPurified) return;
+  
+  const purifiedItem = item as PurifiedDreamHistoryItem;
+  const theater = historyStore.loadPurifiedDreamFromHistory(item.id);
+  if (!theater) return;
+  
+  const theaterToLoad = JSON.parse(JSON.stringify(theater.purifiedTheater));
+  theaterToLoad.isPlaying = false;
+  theaterToLoad.currentSceneIndex = 0;
+  dreamStore.loadTheater(theaterToLoad);
+  router.push('/');
+};
+
+const exportLucidRewriteItem = (item: HistoryItem, event: Event) => {
+  event.stopPropagation();
+  const data = historyStore.exportLucidDreamRewriteItem(item.id);
+  if (data) {
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${getTheaterForDisplay(item).title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_清醒梦改写.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+};
+
+const exportPurifiedItem = (item: HistoryItem, event: Event) => {
+  event.stopPropagation();
+  const data = historyStore.exportPurifiedDreamItem(item.id);
+  if (data) {
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${getTheaterForDisplay(item).title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_噩梦净化.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -219,6 +322,13 @@ const clearAllHistory = () => {
               :style="{ imageRendering: 'pixelated' }"
             />
             <img
+              v-else-if="item.isLucidDreamRewrite && (item as LucidDreamRewriteHistoryItem).rewrittenThumbnail"
+              :src="(item as LucidDreamRewriteHistoryItem).rewrittenThumbnail"
+              :alt="getTheaterForDisplay(item).title"
+              class="w-full h-full object-cover"
+              :style="{ imageRendering: 'pixelated' }"
+            />
+            <img
               v-else-if="item.thumbnail"
               :src="item.thumbnail"
               :alt="getTheaterForDisplay(item).title"
@@ -233,6 +343,18 @@ const clearAllHistory = () => {
               class="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-500/80 via-purple-500/80 to-red-500/80 text-[8px] text-center py-0.5 font-pixel"
             >
               多结局
+            </div>
+            <div
+              v-else-if="item.isLucidDreamRewrite"
+              class="absolute top-0 left-0 right-0 bg-gradient-to-r from-indigo-500/80 via-purple-500/80 to-pink-500/80 text-[8px] text-center py-0.5 font-pixel"
+            >
+              清醒梦改写
+            </div>
+            <div
+              v-else-if="item.isPurified"
+              class="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-400/80 via-orange-400/80 to-red-400/80 text-[8px] text-center py-0.5 font-pixel"
+            >
+              噩梦净化
             </div>
           </div>
 
@@ -254,6 +376,20 @@ const clearAllHistory = () => {
               >
                 <Users class="w-3 h-3" />
                 双人合梦
+              </span>
+              <span
+                v-else-if="item.isLucidDreamRewrite"
+                class="flex items-center gap-1 text-[10px] px-1.5 py-0.5 pixel-border bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 text-purple-300"
+              >
+                <Moon class="w-3 h-3" />
+                {{ getBranchCount(item) }} 分支
+              </span>
+              <span
+                v-else-if="item.isPurified"
+                class="flex items-center gap-1 text-[10px] px-1.5 py-0.5 pixel-border bg-gradient-to-r from-yellow-400/20 via-orange-400/20 to-red-400/20 text-orange-300"
+              >
+                <Sun class="w-3 h-3" />
+                {{ getPurificationTheme(item) }}
               </span>
               <span
                 v-else
@@ -295,6 +431,22 @@ const clearAllHistory = () => {
               <Wand2 class="w-3.5 h-3.5" />
             </button>
             <button
+              v-if="item.isLucidDreamRewrite && (item as LucidDreamRewriteHistoryItem).theater.selectedBranchId"
+              class="pixel-btn p-1.5 text-purple-400 hover:bg-purple-500/20"
+              title="加载已选改写分支到编辑区"
+              @click="(e) => loadSelectedRewriteBranch(item, e)"
+            >
+              <Wand2 class="w-3.5 h-3.5" />
+            </button>
+            <button
+              v-if="item.isPurified"
+              class="pixel-btn p-1.5 text-orange-400 hover:bg-orange-500/20"
+              title="加载净化版到编辑区"
+              @click="(e) => loadPurifiedToDream(item, e)"
+            >
+              <Wand2 class="w-3.5 h-3.5" />
+            </button>
+            <button
               v-if="getTheaterForDisplay(item).encyclopedia"
               class="pixel-btn p-1.5 text-dream-secondary hover:bg-dream-secondary/20"
               title="查看图鉴"
@@ -305,7 +457,12 @@ const clearAllHistory = () => {
             <button
               class="pixel-btn p-1.5"
               title="导出"
-              @click="(e) => item.isBranchingEndings ? exportBranchingEndingsItem(item, e) : exportHistoryItem(item, e)"
+              @click="(e) => {
+                if (item.isBranchingEndings) exportBranchingEndingsItem(item, e);
+                else if (item.isLucidDreamRewrite) exportLucidRewriteItem(item, e);
+                else if (item.isPurified) exportPurifiedItem(item, e);
+                else exportHistoryItem(item, e);
+              }"
             >
               <Download class="w-3.5 h-3.5" />
             </button>
@@ -351,6 +508,43 @@ const clearAllHistory = () => {
             >
               {{ ending.variant === 'ending-a' ? 'A' : ending.variant === 'ending-b' ? 'B' : 'C' }}. {{ ending.theme.name }}
               <span v-if="ending.isSelected" class="ml-1">✓</span>
+            </span>
+          </div>
+          <div
+            v-if="item.isLucidDreamRewrite"
+            class="w-full mt-2 pt-2 border-t border-dream-border/50 flex items-center gap-2 flex-wrap"
+          >
+            <span class="text-[10px] text-dream-accent">改写分支:</span>
+            <span
+              v-for="branch in (item as LucidDreamRewriteHistoryItem).theater.branches"
+              :key="branch.id"
+              class="text-[10px] px-1.5 py-0.5 pixel-border"
+              :style="{
+                backgroundColor: branch.isSelected ? '#8B5CF620' : '#1e1b4b30',
+                color: branch.isSelected ? '#A78BFA' : '#9CA3AF',
+                borderColor: branch.isSelected ? '#8B5CF6' : undefined,
+              }"
+              :class="branch.isSelected ? 'ring-1' : ''"
+            >
+              {{ branch.name }}
+              <span v-if="branch.isSelected" class="ml-1">✓</span>
+            </span>
+          </div>
+          <div
+            v-if="item.isPurified"
+            class="w-full mt-2 pt-2 border-t border-dream-border/50 flex items-center gap-2 flex-wrap"
+          >
+            <span class="text-[10px] text-dream-accent">净化主题:</span>
+            <span
+              class="text-[10px] px-1.5 py-0.5 pixel-border ring-1"
+              :style="{
+                backgroundColor: (item as PurifiedDreamHistoryItem).theater.selectedTheme.color + '20',
+                color: (item as PurifiedDreamHistoryItem).theater.selectedTheme.color,
+                borderColor: (item as PurifiedDreamHistoryItem).theater.selectedTheme.color,
+              }"
+            >
+              {{ (item as PurifiedDreamHistoryItem).theater.selectedTheme.name }}
+              <span class="ml-1">✓</span>
             </span>
           </div>
         </div>

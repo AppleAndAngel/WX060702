@@ -9,7 +9,7 @@ import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
 import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
 import DreamMapView from '@/components/DreamMapView.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch, Moon } from 'lucide-vue-next';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch, Moon, Sun } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -78,6 +78,13 @@ const handleOpenDreamMap = () => {
           >
             <Moon class="w-4 h-4" />
             <span>清醒梦改写</span>
+          </button>
+          <button
+            class="pixel-btn flex items-center gap-2"
+            @click="router.push('/purifier')"
+          >
+            <Sun class="w-4 h-4" />
+            <span>噩梦净化</span>
           </button>
           <button
             class="pixel-btn flex items-center gap-2"
@@ -192,6 +199,16 @@ const handleOpenDreamMap = () => {
               >
                 <Moon class="w-4 h-4" />
                 清醒梦改写剧情
+              </button>
+
+              <button
+                class="w-full pixel-btn flex items-center justify-center gap-2 mt-2"
+                :disabled="!dreamStore.currentDreamTheater"
+                :class="dreamStore.currentDreamTheater ? 'bg-gradient-to-r from-yellow-400/20 via-orange-400/20 to-red-400/20' : ''"
+                @click="router.push('/purifier')"
+              >
+                <Sun class="w-4 h-4" />
+                噩梦净化剧情
               </button>
             </div>
 
