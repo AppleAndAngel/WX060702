@@ -336,6 +336,93 @@ export class AnimationGenerator {
       };
     });
   }
+
+  generateRewriteScenes(
+    originalTheater: DreamTheater,
+    branchPointSceneIndex: number,
+    newAction: string,
+    newOutcome: string,
+    rewriteSceneCount: number,
+    defaultDuration: number
+  ): DreamScene[] {
+    const ruleEngine = createRuleEngine(this.ruleSet);
+    const rewrittenScenes: DreamScene[] = [];
+
+    const branchPointScene = originalTheater.scenes[branchPointSceneIndex];
+    if (!branchPointScene) return rewrittenScenes;
+
+    const originalDream = originalTheater.originalDream;
+    const contextBefore = originalTheater.scenes
+      .slice(0, branchPointSceneIndex + 1)
+      .map(s => s.description)
+      .join(' ');
+
+    const rewritePrompt = `在"${branchPointScene.title}"这一幕，${newAction}，${newOutcome}。基于之前的剧情：${contextBefore}，延续故事发展。`;
+
+    const branchScene = this.generateDreamScene(
+      `${originalDream}，${rewritePrompt}，改写的转折点，行动改变的瞬间`,
+      branchPointScene.actNumber,
+      defaultDuration
+    );
+    branchScene.title = `改写：${branchPointScene.title}`;
+    branchScene.description = `我决定${newAction}，结果${newOutcome}。命运的轨迹在此刻改变...`;
+    rewrittenScenes.push(branchScene);
+
+    for (let i = 1; i < rewriteSceneCount; i++) {
+      const progress = i / rewriteSceneCount;
+      const actNumber = branchPointScene.actNumber + i;
+
+      let scenePrompt = '';
+      if (i === rewriteSceneCount - 1) {
+        scenePrompt = `${originalDream}，${rewritePrompt}，改写故事的最终章，新命运的结局，高潮与收尾`;
+      } else {
+        const intensity = Math.round(progress * 100);
+        scenePrompt = `${originalDream}，${rewritePrompt}，改写故事发展中，新的命运轨迹，紧张度${intensity}%`;
+      }
+
+      const scene = this.generateDreamScene(scenePrompt, actNumber, defaultDuration);
+      rewrittenScenes.push(scene);
+    }
+
+    return rewrittenScenes;
+  }
+
+  createRewrittenTheater(
+    originalTheater: DreamTheater,
+    branchPointSceneIndex: number,
+    rewrittenScenes: DreamScene[],
+    newAction: string,
+    newOutcome: string,
+    fps: number
+  ): DreamTheater {
+    const scenesBeforeRewrite = originalTheater.scenes.slice(0, branchPointSceneIndex);
+    const allScenes = [...scenesBeforeRewrite, ...rewrittenScenes];
+
+    allScenes.forEach((scene, i) => {
+      scene.actNumber = i + 1;
+    });
+
+    const totalDuration = allScenes.reduce((sum, scene) => sum + scene.duration, 0);
+
+    const theater: DreamTheater = {
+      id: generateId(),
+      originalDream: `${originalTheater.originalDream} [改写：${newAction} → ${newOutcome}]`,
+      title: `${originalTheater.title} - 改写版`,
+      scenes: allScenes,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      totalDuration,
+      currentSceneIndex: 0,
+      isPlaying: false,
+      fps,
+      ruleSetId: this.ruleSet.id,
+    };
+
+    const encyclopediaGenerator = createEncyclopediaGenerator();
+    theater.encyclopedia = encyclopediaGenerator.generateEncyclopedia(theater);
+
+    return theater;
+  }
 }
 
 export const createAnimationGenerator = (ruleSet: RuleSet): AnimationGenerator => {

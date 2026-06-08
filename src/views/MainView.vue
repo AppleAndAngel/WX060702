@@ -9,7 +9,7 @@ import SpriteEditor from '@/components/SpriteEditor.vue';
 import ExportPanel from '@/components/ExportPanel.vue';
 import DreamEncyclopedia from '@/components/DreamEncyclopedia.vue';
 import DreamMapView from '@/components/DreamMapView.vue';
-import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch, Sparkles } from 'lucide-vue-next';
+import { Wand2, Save, BookOpen, Layers, Loader2, BookMarked, Users, MapPin, GitBranch, Moon } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 const dreamStore = useDreamStore();
@@ -74,6 +74,13 @@ const handleOpenDreamMap = () => {
         <nav class="flex items-center gap-4">
           <button
             class="pixel-btn flex items-center gap-2"
+            @click="router.push('/lucid-rewrite')"
+          >
+            <Moon class="w-4 h-4" />
+            <span>清醒梦改写</span>
+          </button>
+          <button
+            class="pixel-btn flex items-center gap-2"
             @click="router.push('/branching')"
           >
             <GitBranch class="w-4 h-4" />
@@ -99,13 +106,6 @@ const handleOpenDreamMap = () => {
           >
             <Layers class="w-4 h-4" />
             <span>规则集</span>
-          </button>
-          <button
-            class="pixel-btn flex items-center gap-2"
-            @click="router.push('/purifier')"
-          >
-            <Sparkles class="w-4 h-4" />
-            <span>噩梦净化</span>
           </button>
         </nav>
       </div>
@@ -182,6 +182,16 @@ const handleOpenDreamMap = () => {
               >
                 <GitBranch class="w-4 h-4" />
                 生成三种不同结局
+              </button>
+
+              <button
+                class="w-full pixel-btn flex items-center justify-center gap-2 mt-2"
+                :disabled="!dreamStore.currentDreamTheater"
+                :class="dreamStore.currentDreamTheater ? 'bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20' : ''"
+                @click="router.push('/lucid-rewrite')"
+              >
+                <Moon class="w-4 h-4" />
+                清醒梦改写剧情
               </button>
             </div>
 

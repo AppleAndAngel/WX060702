@@ -8,3 +8,4 @@ export * from './dualDream';
 export * from './dreamMap';
 export * from './branchingEndings';
 export * from './nightmarePurifier';
+export * from './lucidDreamRewrite';

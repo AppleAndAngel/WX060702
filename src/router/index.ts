@@ -4,7 +4,7 @@ import HistoryView from '@/views/HistoryView.vue';
 import RuleSetsView from '@/views/RuleSetsView.vue';
 import DualDreamView from '@/views/DualDreamView.vue';
 import BranchingEndingsView from '@/views/BranchingEndingsView.vue';
-import NightmarePurifierView from '@/views/NightmarePurifierView.vue';
+import LucidDreamRewriteView from '@/views/LucidDreamRewriteView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,6 +25,11 @@ const router = createRouter({
       component: BranchingEndingsView,
     },
     {
+      path: '/lucid-rewrite',
+      name: 'lucid-rewrite',
+      component: LucidDreamRewriteView,
+    },
+    {
       path: '/history',
       name: 'history',
       component: HistoryView,
@@ -33,11 +38,6 @@ const router = createRouter({
       path: '/rulesets',
       name: 'rulesets',
       component: RuleSetsView,
-    },
-    {
-      path: '/purifier',
-      name: 'purifier',
-      component: NightmarePurifierView,
     },
   ],
 });

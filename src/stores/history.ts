@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { DreamTheater, DualDreamTheater, BranchingEndingsTheater, PurifiedDreamTheater } from '@/types';
+import type { DreamTheater, DualDreamTheater, BranchingEndingsTheater, PurifiedDreamTheater, LucidDreamRewriteTheater } from '@/types';
 import { useDreamStore } from './dream';
 import { generateId } from '@/utils/pixelUtils';
 
@@ -29,6 +29,13 @@ export interface PurifiedDreamHistoryItem extends HistoryItem {
   theater: PurifiedDreamTheater;
   isPurified: true;
   originalThumbnail?: string;
+}
+
+export interface LucidDreamRewriteHistoryItem extends HistoryItem {
+  theater: LucidDreamRewriteTheater;
+  isLucidDreamRewrite: true;
+  originalThumbnail?: string;
+  rewrittenThumbnail?: string;
 }
 
 export const useHistoryStore = defineStore('history', () => {
@@ -293,6 +300,10 @@ export const useHistoryStore = defineStore('history', () => {
     return sortedHistory.value.filter(h => h.isPurified) as PurifiedDreamHistoryItem[];
   });
 
+  const lucidDreamRewriteHistory = computed(() => {
+    return sortedHistory.value.filter(h => h.isLucidDreamRewrite) as LucidDreamRewriteHistoryItem[];
+  });
+
   const generatePurifiedDreamThumbnail = (theater: PurifiedDreamTheater): string => {
     return generateThumbnail(theater);
   };
@@ -461,6 +472,99 @@ export const useHistoryStore = defineStore('history', () => {
     return JSON.stringify(exportData, null, 2);
   };
 
+  const generateLucidDreamRewriteThumbnail = (theater: LucidDreamRewriteTheater): string => {
+    return generateThumbnail(theater.originalTheater);
+  };
+
+  const saveLucidDreamRewriteToHistory = async (rewriteTheater: LucidDreamRewriteTheater): Promise<boolean> => {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const theaterToSave = JSON.parse(JSON.stringify(rewriteTheater));
+      theaterToSave.originalTheater.isPlaying = false;
+      theaterToSave.branches.forEach((branch: any) => {
+        branch.fullTheater.isPlaying = false;
+      });
+
+      const thumbnail = generateLucidDreamRewriteThumbnail(theaterToSave);
+      const originalThumbnail = generateThumbnail(theaterToSave.originalTheater);
+      
+      let rewrittenThumbnail: string | undefined;
+      if (theaterToSave.selectedBranchId) {
+        const selectedBranch = theaterToSave.branches.find((b: any) => b.id === theaterToSave.selectedBranchId);
+        if (selectedBranch) {
+          rewrittenThumbnail = generateThumbnail(selectedBranch.fullTheater);
+        }
+      }
+
+      const existingIndex = history.value.findIndex(
+        h => h.theater.id === theaterToSave.id
+      );
+
+      const historyItem: LucidDreamRewriteHistoryItem = {
+        id: generateId(),
+        theater: theaterToSave,
+        savedAt: Date.now(),
+        thumbnail,
+        isLucidDreamRewrite: true,
+        originalThumbnail,
+        rewrittenThumbnail,
+      };
+
+      if (existingIndex !== -1) {
+        history.value[existingIndex] = historyItem;
+      } else {
+        history.value.unshift(historyItem);
+      }
+
+      return true;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '保存失败';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loadLucidDreamRewriteFromHistory = (historyId: string): LucidDreamRewriteTheater | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isLucidDreamRewrite) {
+      error.value = '未找到该清醒梦改写记录';
+      return null;
+    }
+
+    try {
+      const theater = JSON.parse(JSON.stringify(item.theater)) as LucidDreamRewriteTheater;
+      theater.originalTheater.isPlaying = false;
+      theater.originalTheater.currentSceneIndex = 0;
+      theater.branches.forEach(branch => {
+        branch.fullTheater.isPlaying = false;
+        branch.fullTheater.currentSceneIndex = 0;
+      });
+      return theater;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : '加载失败';
+      return null;
+    }
+  };
+
+  const exportLucidDreamRewriteItem = (historyId: string): string | null => {
+    const item = history.value.find(h => h.id === historyId);
+    if (!item || !item.isLucidDreamRewrite) return null;
+
+    const exportData = {
+      version: '1.0',
+      type: 'lucid-dream-rewrite',
+      exportedAt: Date.now(),
+      rewriteTheater: item.theater,
+    };
+
+    return JSON.stringify(exportData, null, 2);
+  };
+
   return {
     history,
     isLoading,
@@ -471,20 +575,24 @@ export const useHistoryStore = defineStore('history', () => {
     singleDreamHistory,
     branchingEndingsHistory,
     purifiedDreamHistory,
+    lucidDreamRewriteHistory,
     saveToHistory,
     saveDualDreamToHistory,
     saveBranchingEndingsToHistory,
     savePurifiedDreamToHistory,
+    saveLucidDreamRewriteToHistory,
     loadFromHistory,
     loadDualDreamFromHistory,
     loadBranchingEndingsFromHistory,
     loadPurifiedDreamFromHistory,
+    loadLucidDreamRewriteFromHistory,
     removeFromHistory,
     clearHistory,
     exportHistoryItem,
     exportDualDreamItem,
     exportBranchingEndingsItem,
     exportPurifiedDreamItem,
+    exportLucidDreamRewriteItem,
     importHistoryItem,
     getHistoryItem,
     searchHistory,
